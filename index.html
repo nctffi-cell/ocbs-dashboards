@@ -15,7 +15,7 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);
     -webkit-font-smoothing:antialiased;line-height:1.55}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
 
   /* Header */
   header{background:linear-gradient(135deg,#05311E 0%,#008C44 100%);color:#fff;
@@ -28,32 +28,34 @@
     font-family:'Playfair Display',serif}
   .brand .name{font-weight:700;font-size:18px;letter-spacing:.5px}
   .brand .name small{display:block;font-weight:400;font-size:12px;opacity:.8;letter-spacing:1px}
-  header h1{font-family:'Playfair Display',serif;font-size:40px;line-height:1.15;font-weight:700;max-width:620px}
-  header p{margin-top:14px;font-size:16px;opacity:.9;max-width:560px}
+  header h1{font-family:'Playfair Display',serif;font-size:40px;line-height:1.15;font-weight:700;max-width:680px}
+  header p{margin-top:14px;font-size:16px;opacity:.92;max-width:620px}
   .meta-row{margin-top:24px;display:flex;gap:10px;flex-wrap:wrap}
   .pill{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
     padding:6px 14px;border-radius:999px;font-size:12.5px;font-weight:500}
 
   /* Sections */
-  main{padding:48px 0 70px}
-  .sector{margin-bottom:44px}
-  .sector-head{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;
-    padding-bottom:10px;border-bottom:2px solid var(--line)}
-  .sector-head h2{font-size:20px;font-weight:700;color:var(--green-dk)}
-  .sector-head .icon{font-size:22px}
-  .sector-head .count{font-size:13px;color:var(--muted);font-weight:500}
+  main{padding:52px 0 70px}
+  .group{margin-bottom:40px}
+  .group-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--line)}
+  .group-head h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--green-dk)}
+  .group-head .hint{font-size:12.5px;color:var(--muted);font-weight:500;letter-spacing:.3px}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-  .card{display:block;text-decoration:none;color:inherit;background:var(--paper);
-    border:1px solid var(--line);border-radius:14px;padding:20px 22px;
-    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;position:relative}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:16px}
+  .card{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--paper);
+    border:1px solid var(--line);border-radius:14px;padding:20px 22px 18px;
+    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+    position:relative;min-height:172px}
   .card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(5,49,30,.10);border-color:var(--green)}
-  .card .tag{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  .card .row1{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .card .ic{font-size:18px}
+  .card .tag{font-size:10.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
     color:var(--gold)}
-  .card h3{font-size:17px;font-weight:700;margin:6px 0 6px;color:var(--ink)}
-  .card p{font-size:13.5px;color:var(--muted);line-height:1.5}
+  .card h3{font-size:16.5px;font-weight:700;margin:2px 0 8px;color:var(--ink);line-height:1.3}
+  .card p{font-size:13px;color:var(--muted);line-height:1.5;flex:1}
   .card .go{margin-top:14px;display:inline-flex;align-items:center;gap:6px;
-    font-size:13px;font-weight:600;color:var(--green)}
+    font-size:12.5px;font-weight:600;color:var(--green)}
   .card .go svg{transition:transform .18s ease}
   .card:hover .go svg{transform:translateX(4px)}
 
@@ -66,6 +68,7 @@
   @media(max-width:600px){
     header h1{font-size:30px}
     header{padding:40px 0 46px}
+    .group-head{flex-direction:column;align-items:flex-start;gap:4px}
   }
 </style>
 </head>
@@ -76,11 +79,11 @@
       <div class="logo">O</div>
       <div class="name">OCBS RESEARCH<small>PHÒNG PHÂN TÍCH</small></div>
     </div>
-    <h1>Dashboard Ngành &amp; Doanh nghiệp</h1>
-    <p>Bộ bảng theo dõi trực quan diễn biến hoạt động, định giá và sức khỏe tài chính theo ngành — cập nhật theo dữ liệu BCTC mới nhất.</p>
+    <h1>Dashboard Ngành</h1>
+    <p>Bộ bảng theo dõi trực quan diễn biến hoạt động, định giá và sức khỏe tài chính của từng ngành — cập nhật theo dữ liệu BCTC mới nhất.</p>
     <div class="meta-row">
-      <span class="pill">5 ngành</span>
-      <span class="pill">8 bảng theo dõi</span>
+      <span class="pill">6 ngành</span>
+      <span class="pill">7 bảng theo dõi</span>
       <span class="pill">Cập nhật T5/2026</span>
     </div>
   </div>
@@ -88,97 +91,53 @@
 
 <main class="wrap">
 
-  <section class="sector">
-    <div class="sector-head">
-      <span class="icon">🏦</span>
-      <h2>Ngân hàng</h2>
-      <span class="count">4 bảng</span>
+  <section class="group">
+    <div class="group-head">
+      <h2>Tài chính</h2>
+      <span class="hint">Ngân hàng · Chứng khoán</span>
     </div>
     <div class="grid">
       <a class="card" href="ngan_hang/tong_hop.html">
-        <span class="tag">Tổng hợp ngành</span>
-        <h3>So sánh toàn ngành</h3>
+        <div class="row1"><span class="ic">🏦</span><span class="tag">Ngân hàng</span></div>
+        <h3>Tổng hợp ngành Ngân hàng</h3>
         <p>NIM · ROE · NPL · LDR · CASA · P/E · P/B của VCB, BID, CTG, TCB, MBB, ACB theo quý.</p>
         <span class="go">Mở bảng <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </a>
-      <a class="card" href="ngan_hang/bid.html">
-        <span class="tag">Ngân hàng</span>
-        <h3>BID — BIDV</h3>
-        <p>Chỉ tiêu sinh lời, chất lượng tài sản và định giá riêng cho BIDV.</p>
+      <a class="card" href="chung_khoan/chung_khoan.html">
+        <div class="row1"><span class="ic">📈</span><span class="tag">Chứng khoán</span></div>
+        <h3>Tổng hợp ngành Chứng khoán</h3>
+        <p>Sức cầu thị trường (GTGD, TK mở mới, dư nợ margin), cơ cấu doanh thu &amp; thị phần MG HOSE, vốn chủ &amp; đòn bẩy margin của 8 CTCK trọng tâm.</p>
         <span class="go">Mở bảng <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </a>
-      <a class="card" href="ngan_hang/ocb.html">
-        <span class="tag">Ngân hàng</span>
-        <h3>OCB — Phương Đông</h3>
-        <p>Chỉ tiêu sinh lời, chất lượng tài sản và định giá riêng cho OCB.</p>
-        <span class="go">Mở bảng <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-      </a>
-      <a class="card" href="ngan_hang/eib.html">
-        <span class="tag">Ngân hàng</span>
-        <h3>EIB — Eximbank</h3>
-        <p>Chỉ tiêu sinh lời, chất lượng tài sản và định giá riêng cho Eximbank.</p>
+      <a class="card" href="chung_khoan/chung_khoan_per_ticker.html">
+        <div class="row1"><span class="ic">📊</span><span class="tag">Định giá per-ticker</span></div>
+        <h3>Định giá lịch sử 23 CTCK</h3>
+        <p>P/E, P/B, ROE TTM với bands ±1σ/±2σ lịch sử. Scatter P/B–ROE + bảng xếp hạng composite + verdict (★ Cơ hội / Hấp dẫn / Hợp lý / Đắt).</p>
         <span class="go">Mở bảng <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </a>
     </div>
   </section>
 
-  <section class="sector">
-    <div class="sector-head">
-      <span class="icon">🏗️</span>
-      <h2>Thép</h2>
-      <span class="count">1 bảng</span>
+  <section class="group">
+    <div class="group-head">
+      <h2>Hàng hóa &amp; Sản xuất</h2>
+      <span class="hint">Thép · Cao su · Cá tra</span>
     </div>
     <div class="grid">
       <a class="card" href="thep/thep.html">
-        <span class="tag">Tổng hợp ngành</span>
+        <div class="row1"><span class="ic">🏗️</span><span class="tag">Thép</span></div>
         <h3>Dashboard ngành Thép</h3>
         <p>Giá HRC/thép xây dựng, quặng/than cốc, sản lượng và biên gộp doanh nghiệp đầu ngành.</p>
         <span class="go">Mở bảng <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </a>
-    </div>
-  </section>
-
-  <section class="sector">
-    <div class="sector-head">
-      <span class="icon">🌿</span>
-      <h2>Cao su</h2>
-      <span class="count">1 bảng</span>
-    </div>
-    <div class="grid">
       <a class="card" href="cao_su/cao_su.html">
-        <span class="tag">Tổng hợp ngành</span>
+        <div class="row1"><span class="ic">🌿</span><span class="tag">Cao su</span></div>
         <h3>Dashboard ngành Cao su</h3>
         <p>Giá cao su tự nhiên, sản lượng khai thác, biên gộp và mảng KCN của doanh nghiệp cao su.</p>
         <span class="go">Mở bảng <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </a>
-    </div>
-  </section>
-
-  <section class="sector">
-    <div class="sector-head">
-      <span class="icon">🚢</span>
-      <h2>Vận tải biển</h2>
-      <span class="count">1 bảng</span>
-    </div>
-    <div class="grid">
-      <a class="card" href="van_tai_bien/van_tai_bien.html">
-        <span class="tag">Tổng hợp ngành</span>
-        <h3>Dashboard ngành Vận tải biển</h3>
-        <p>5 phân khúc: dầu thô (PVT/PVP) · dầu sản phẩm (PVT/VTO) · khí-hóa chất (GSP) · hàng rời (VOS/VNA) · container (HAH). 28 chỉ số cước BDI/BDTI/BCTI/WCI + Aframax/Suezmax/VLCC/VLGC.</p>
-        <span class="go">Mở bảng <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-      </a>
-    </div>
-  </section>
-
-  <section class="sector">
-    <div class="sector-head">
-      <span class="icon">🐟</span>
-      <h2>Cá tra</h2>
-      <span class="count">1 bảng</span>
-    </div>
-    <div class="grid">
       <a class="card" href="ca_tra/ca_tra.html">
-        <span class="tag">Tổng hợp ngành</span>
+        <div class="row1"><span class="ic">🐟</span><span class="tag">Cá tra</span></div>
         <h3>Dashboard ngành Cá tra</h3>
         <p>Giá xuất khẩu, sản lượng, thị trường Mỹ/EU/Trung Quốc và biên gộp VHC, ANV, IDI.</p>
         <span class="go">Mở bảng <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
@@ -186,23 +145,16 @@
     </div>
   </section>
 
-  <section class="sector">
-    <div class="sector-head">
-      <span class="icon">📈</span>
-      <h2>Chứng khoán</h2>
-      <span class="count">2 bảng</span>
+  <section class="group">
+    <div class="group-head">
+      <h2>Vận tải</h2>
+      <span class="hint">Vận tải biển</span>
     </div>
     <div class="grid">
-      <a class="card" href="chung_khoan/chung_khoan.html">
-        <span class="tag">Tổng hợp ngành</span>
-        <h3>Dashboard ngành Chứng khoán</h3>
-        <p>Sức cầu thị trường (GTGD, TK mở mới, dư nợ margin), cơ cấu doanh thu &amp; thị phần MG HOSE, vốn chủ &amp; đòn bẩy margin của 8 CTCK trọng tâm.</p>
-        <span class="go">Mở bảng <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-      </a>
-      <a class="card" href="chung_khoan/chung_khoan_per_ticker.html">
-        <span class="tag">Định giá per-ticker</span>
-        <h3>Định giá lịch sử 23 CTCK</h3>
-        <p>P/E, P/B, ROE TTM với bands ±1σ/±2σ lịch sử. Scatter P/B–ROE + bảng xếp hạng composite + verdict (★ Cơ hội / Hấp dẫn / Hợp lý / Đắt).</p>
+      <a class="card" href="van_tai_bien/van_tai_bien.html">
+        <div class="row1"><span class="ic">🚢</span><span class="tag">Vận tải biển</span></div>
+        <h3>Dashboard ngành Vận tải biển</h3>
+        <p>5 phân khúc: dầu thô (PVT/PVP) · dầu sản phẩm (PVT/VTO) · khí-hóa chất (GSP) · hàng rời (VOS/VNA) · container (HAH). 28 chỉ số cước BDI/BDTI/BCTI/WCI + Aframax/Suezmax/VLCC/VLGC.</p>
         <span class="go">Mở bảng <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </a>
     </div>
