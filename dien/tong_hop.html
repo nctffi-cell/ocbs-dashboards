@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Ngành Điện — Tổng hợp · OCBS Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#FAFAF7;--ink:#1a2420;--muted:#5f6b64;--line:#e7e6df;
+  --green:#008C44;--green-d:#05623a;--gold:#E4A025;--card:#fff;
+  --blue:#2f6fb0;--red:#c0492f;--teal:#2a9d8f;--orange:#d4660c;--purple:#7a5ea8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5}
+
+/* ── Topbar ───────────────────────────────────────────────────────── */
+.topbar{background:var(--green-d);color:#fff;padding:14px 32px;display:flex;align-items:center;gap:14px}
+.topbar img{height:30px;width:auto}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.3px}
+.topbar .upd{font-size:11px;opacity:.7;margin-left:auto}
+
+/* ── Layout ───────────────────────────────────────────────────────── */
+.wrap{max-width:1400px;margin:0 auto;padding:24px 20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px}
+
+/* ── Cards ────────────────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+.card h3{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.card .note{font-size:11px;color:var(--muted);margin-bottom:14px}
+.chart-box{position:relative}
+
+/* ── KPI strip ────────────────────────────────────────────────────── */
+.kpi-strip{display:grid;gap:14px;margin-bottom:28px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.kpi-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:6px}
+.kpi-val{font-size:24px;font-weight:800;line-height:1.1}
+.kpi-unit{font-size:13px;font-weight:500}
+.kpi-sub{font-size:12px;margin-top:4px}
+.kpi-dt{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ── Section title ────────────────────────────────────────────────── */
+.sec-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+           color:var(--muted);margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+
+/* ── Filter buttons ───────────────────────────────────────────────── */
+.filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fbtn{background:none;border:1px solid var(--line);border-radius:5px;padding:3px 10px;
+      font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+.fbtn.active,.fbtn:hover{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* ── Company table ────────────────────────────────────────────────── */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{background:#f4f4f0;font-size:10.5px;font-weight:700;text-transform:uppercase;
+        letter-spacing:.6px;color:var(--muted);padding:8px 10px;border-bottom:2px solid var(--line)}
+.tbl th.r,.tbl td.td-r{text-align:right}
+.tbl td{padding:9px 10px;border-bottom:1px solid #f0ede5}
+.tbl tbody tr:hover{background:#f9f8f3}
+.td-tk{font-weight:700;color:var(--green);font-family:monospace;font-size:13px}
+.td-name{color:var(--ink)}
+.td-pos{font-weight:600;color:var(--green-d)}
+.td-neg{font-weight:600;color:var(--red)}
+
+/* ── Nowcast badge ────────────────────────────────────────────────── */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-up{background:#e3f3e9;color:#0a7a3e}
+.badge-dn{background:#fbe6e0;color:#b23a1f}
+.badge-flat{background:#eef0ee;color:#5f6b64}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.footer{margin-top:32px;padding:18px 0;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media(max-width:1000px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.kpi-strip,.g2,.g3{grid-template-columns:1fr}}
+
+
+/* Verdict banner */
+.verdict-banner{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.verdict-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+  border-left:5px solid var(--line);transition:.2s}
+.verdict-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-2px)}
+.verdict-card a{text-decoration:none;color:inherit;display:block}
+.verdict-icon{font-size:28px;line-height:1}
+.verdict-name{font-size:14px;font-weight:700;color:var(--ink);margin:8px 0 4px}
+.verdict-label{display:inline-block;padding:3px 10px;border-radius:14px;font-size:11px;font-weight:700;margin-bottom:8px}
+.verdict-score{font-size:11px;color:var(--muted);margin-bottom:8px;font-family:monospace}
+.verdict-narrative{font-size:12.5px;line-height:1.5;color:var(--ink)}
+.verdict-arrow{font-size:10.5px;color:var(--green);margin-top:8px;font-weight:600}
+
+/* Anchor nav giữa các sub-page */
+.subnav{background:#fff;border-bottom:1px solid var(--line);padding:10px 32px;display:flex;gap:8px;
+  overflow-x:auto;position:sticky;top:0;z-index:10}
+.subnav a{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;color:var(--muted);
+  text-decoration:none;border:1px solid var(--line);white-space:nowrap;transition:.15s}
+.subnav a:hover{background:var(--green);color:#fff;border-color:var(--green)}
+.subnav a.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* Ticker matrix */
+.ticker-row{display:grid;grid-template-columns:60px 1fr 90px 70px 70px 70px 1fr;gap:10px;align-items:center;
+  padding:10px 12px;border-bottom:1px solid #f0ede5;font-size:12.5px}
+.ticker-row.head{background:#f4f4f0;font-size:10.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--muted);border-bottom:2px solid var(--line)}
+.ticker-row .tk{font-weight:700;color:var(--green);font-family:monospace;font-size:13.5px}
+.ticker-row .branch-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.ticker-row .verdict-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;text-align:center;min-width:80px}
+
+/* Driver list */
+.driver-list{list-style:none;padding:0;margin:0}
+.driver-list li{padding:12px 14px;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fafaf6}
+.driver-list .dname{font-weight:700;font-size:12.5px;color:var(--ink);margin-bottom:4px}
+.driver-list .ddetail{font-size:12px;color:var(--muted);font-family:monospace;margin-bottom:4px}
+.driver-list .dinterp{font-size:12.5px;color:var(--ink);line-height:1.5}
+.driver-list .dscore{display:inline-block;padding:1px 7px;border-radius:8px;font-size:10.5px;font-weight:700;font-family:monospace;margin-left:8px}
+
+/* Lake heatmap */
+.lake-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.lake-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px}
+.lake-card .lname{font-weight:700;color:var(--ink);font-size:12.5px;margin-bottom:2px}
+.lake-card .lmeta{color:var(--muted);font-size:10.5px;margin-bottom:8px}
+.lake-card .lval{font-size:18px;font-weight:800;line-height:1}
+.lake-card .lz{font-size:11px;font-weight:600;font-family:monospace;margin-top:3px}
+
+@media(max-width:900px){.verdict-banner{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.verdict-banner{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="topbar">
+  <img src="https://ocbs.com.vn/images/logo-white.png" alt="OCBS" onerror="this.style.display='none'">
+  <h1>Dashboard Ngành Điện — Tổng hợp</h1>
+  <span class="upd">OCBS Research · Cập nhật: 2026-05-25 00:43</span>
+</div>
+<div class="subnav"><a href="tong_hop_latest.html" class="active">🏠 Tổng hợp</a><a href="thuy_dien_latest.html" class="">💧 Thủy điện</a><a href="nhiet_than_latest.html" class="">🔥 Nhiệt than</a><a href="dien_khi_latest.html" class="">⛽ Điện khí</a><a href="nlmt_gio_latest.html" class="">☀️ NLMT / Gió</a></div>
+<div class="wrap">
+  <div class="sec-title">Sắp tới điện nào tốt?</div>
+
+  <div class="verdict-banner"><div class="verdict-card" style="border-left-color:#7a6a3a">
+  <a href="thuy_dien_latest.html">
+    <div class="verdict-icon">💧</div>
+    <div class="verdict-name">Thủy điện</div>
+    <span class="verdict-label" style="background:#fbf5e2;color:#7a6a3a">→ Trung tính</span>
+    <div class="verdict-score">score = -0.03</div>
+    <div class="verdict-narrative">ENSO forecast 6 tháng tới (P(El Niño)=88% · P(La Niña)=0%) cho thấy El Niño đậm — rủi ro hạn hán cao, ảnh hưởng thẳng lưu lượng nước về hồ.</div>
+    <div class="verdict-arrow">Xem chi tiết →</div>
+  </a>
+</div><div class="verdict-card" style="border-left-color:#b23a1f">
+  <a href="nhiet_than_latest.html">
+    <div class="verdict-icon">🔥</div>
+    <div class="verdict-name">Nhiệt than</div>
+    <span class="verdict-label" style="background:#fbe6e0;color:#b23a1f">▼ Tiêu cực</span>
+    <div class="verdict-score">score = -0.73</div>
+    <div class="verdict-narrative">Cơ cấu nhiệt than trong tổng phát điện (2026-05-01: 12.</div>
+    <div class="verdict-arrow">Xem chi tiết →</div>
+  </a>
+</div><div class="verdict-card" style="border-left-color:#7a6a3a">
+  <a href="dien_khi_latest.html">
+    <div class="verdict-icon">⛽</div>
+    <div class="verdict-name">Điện khí</div>
+    <span class="verdict-label" style="background:#fbf5e2;color:#7a6a3a">→ Trung tính</span>
+    <div class="verdict-score">score = -0.05</div>
+    <div class="verdict-narrative">Cơ cấu điện khí (2026-05-01: 1.</div>
+    <div class="verdict-arrow">Xem chi tiết →</div>
+  </a>
+</div><div class="verdict-card" style="border-left-color:#7a6a3a">
+  <a href="nlmt_gio_latest.html">
+    <div class="verdict-icon">☀️</div>
+    <div class="verdict-name">NLMT / Điện gió</div>
+    <span class="verdict-label" style="background:#fbf5e2;color:#7a6a3a">→ Trung tính</span>
+    <div class="verdict-score">score = -0.15</div>
+    <div class="verdict-narrative">Cơ cấu NLMT + gió (2026-05-01: 2.</div>
+    <div class="verdict-arrow">Xem chi tiết →</div>
+  </a>
+</div></div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>ENSO history + forecast</h3>
+      <p class="note">12 tháng qua (cột thật) + 9 tháng dự báo từ 2026-04-20. Trục Y = xác suất (%).</p>
+      <div class="chart-box" style="height:280px"><canvas id="ch-enso"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Cơ cấu nguồn phát điện theo tháng (%)</h3>
+      <p class="note">5 năm. Đường nào dày → nguồn đó được huy động nhiều.</p>
+      <div class="chart-box" style="height:280px"><canvas id="ch-res"></canvas></div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>Giá CGM thị trường (đồng/kWh)</h3>
+      <p class="note">Giá điện thị trường cạnh tranh — biến động mạnh theo cung-cầu tháng.</p>
+      <div class="chart-box" style="height:240px"><canvas id="ch-cgm"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Tóm tắt 4 nhánh</h3>
+      <p class="note">Score weighted từ driver chính của từng nhánh.</p>
+      <div style="font-size:12.5px;line-height:1.8;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0ede5">
+          <span><b>Thủy điện</b></span>
+          <span style="font-family:monospace;color:#7a6a3a;font-weight:700">
+          → -0.03</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0ede5">
+          <span><b>Nhiệt than</b></span>
+          <span style="font-family:monospace;color:#b23a1f;font-weight:700">
+          ▼ -0.73</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0ede5">
+          <span><b>Điện khí</b></span>
+          <span style="font-family:monospace;color:#7a6a3a;font-weight:700">
+          → -0.05</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0ede5">
+          <span><b>NLMT / Điện gió</b></span>
+          <span style="font-family:monospace;color:#7a6a3a;font-weight:700">
+          → -0.15</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title">Cổ phiếu liên đới — đi vào ai và vì sao</div>
+
+  <div class="card" style="padding:14px 16px">
+  <h3 style="margin-bottom:10px">Bảng cổ phiếu liên đới — verdict per ticker</h3>
+  <p class="note">16 mã chia 4 nhánh. Verdict = weighted score theo exposure profile từng nhánh.</p>
+  <div class="ticker-row head"><div>Mã</div><div>Lý do</div><div class="tk">Verdict</div><div class="td-r">Vốn hóa</div><div class="td-r">P/E</div><div class="td-r">ROE</div><div>Drill-down</div></div><div class="ticker-row">
+  <div class="tk">VSH</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">10,229</div>
+  <div style="text-align:right;font-family:monospace">11.9</div>
+  <div style="text-align:right;font-family:monospace">17.5%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">CHP</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">4,493</div>
+  <div style="text-align:right;font-family:monospace">10.4</div>
+  <div style="text-align:right;font-family:monospace">21.3%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">TMP</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">3,850</div>
+  <div style="text-align:right;font-family:monospace">15.0</div>
+  <div style="text-align:right;font-family:monospace">20.0%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">SHP</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">3,471</div>
+  <div style="text-align:right;font-family:monospace">10.8</div>
+  <div style="text-align:right;font-family:monospace">25.6%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">TBC</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">2,264</div>
+  <div style="text-align:right;font-family:monospace">9.7</div>
+  <div style="text-align:right;font-family:monospace">20.8%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">SBA</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">1,724</div>
+  <div style="text-align:right;font-family:monospace">10.3</div>
+  <div style="text-align:right;font-family:monospace">16.4%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">NT2</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Điện khí</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.05</span></div>
+  <div style="text-align:right;font-family:monospace">7,945</div>
+  <div style="text-align:right;font-family:monospace">7.0</div>
+  <div style="text-align:right;font-family:monospace">25.3%</div>
+  <div><a href="dien_khi_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">⛽ dien khi</a></div>
+</div><div class="ticker-row">
+  <div class="tk">HDG</div>
+  <div style="font-size:11.5px;color:var(--ink)">70% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.07</span></div>
+  <div style="text-align:right;font-family:monospace">10,951</div>
+  <div style="text-align:right;font-family:monospace">18.2</div>
+  <div style="text-align:right;font-family:monospace">10.5%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">PC1</div>
+  <div style="font-size:11.5px;color:var(--ink)">55% NLMT / Điện gió</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.10</span></div>
+  <div style="text-align:right;font-family:monospace">11,639</div>
+  <div style="text-align:right;font-family:monospace">9.9</div>
+  <div style="text-align:right;font-family:monospace">17.7%</div>
+  <div><a href="nlmt_gio_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">☀️ nlmt gio</a></div>
+</div><div class="ticker-row">
+  <div class="tk">GEG</div>
+  <div style="font-size:11.5px;color:var(--ink)">85% NLMT / Điện gió</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.13</span></div>
+  <div style="text-align:right;font-family:monospace">6,865</div>
+  <div style="text-align:right;font-family:monospace">12.9</div>
+  <div style="text-align:right;font-family:monospace">9.1%</div>
+  <div><a href="nlmt_gio_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">☀️ nlmt gio</a></div>
+</div><div class="ticker-row">
+  <div class="tk">REE</div>
+  <div style="font-size:11.5px;color:var(--ink)">50% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.15</span></div>
+  <div style="text-align:right;font-family:monospace">37,104</div>
+  <div style="text-align:right;font-family:monospace">17.3</div>
+  <div style="text-align:right;font-family:monospace">13.6%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">POW</div>
+  <div style="font-size:11.5px;color:var(--ink)">60% Điện khí</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.22</span></div>
+  <div style="text-align:right;font-family:monospace">39,882</div>
+  <div style="text-align:right;font-family:monospace">12.9</div>
+  <div style="text-align:right;font-family:monospace">10.0%</div>
+  <div><a href="dien_khi_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">⛽ dien khi</a></div>
+</div><div class="ticker-row">
+  <div class="tk">QTP</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Nhiệt than · Huy động giảm (cầu yếu hoặc renew thay thế)</div>
+  <div><span class="verdict-pill" style="background:#fbe6e0;color:#b23a1f">
+    ▼ Tiêu cực -0.73</span></div>
+  <div style="text-align:right;font-family:monospace">5,850</div>
+  <div style="text-align:right;font-family:monospace">5.4</div>
+  <div style="text-align:right;font-family:monospace">19.6%</div>
+  <div><a href="nhiet_than_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">🔥 nhiet than</a></div>
+</div><div class="ticker-row">
+  <div class="tk">HND</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Nhiệt than · Huy động giảm (cầu yếu hoặc renew thay thế)</div>
+  <div><span class="verdict-pill" style="background:#fbe6e0;color:#b23a1f">
+    ▼ Tiêu cực -0.73</span></div>
+  <div style="text-align:right;font-family:monospace">5,550</div>
+  <div style="text-align:right;font-family:monospace">11.8</div>
+  <div style="text-align:right;font-family:monospace">7.8%</div>
+  <div><a href="nhiet_than_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">🔥 nhiet than</a></div>
+</div><div class="ticker-row">
+  <div class="tk">PPC</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Nhiệt than · Huy động giảm (cầu yếu hoặc renew thay thế)</div>
+  <div><span class="verdict-pill" style="background:#fbe6e0;color:#b23a1f">
+    ▼ Tiêu cực -0.73</span></div>
+  <div style="text-align:right;font-family:monospace">3,442</div>
+  <div style="text-align:right;font-family:monospace">16.1</div>
+  <div style="text-align:right;font-family:monospace">4.7%</div>
+  <div><a href="nhiet_than_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">🔥 nhiet than</a></div>
+</div><div class="ticker-row">
+  <div class="tk">NBP</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Nhiệt than · Huy động giảm (cầu yếu hoặc renew thay thế)</div>
+  <div><span class="verdict-pill" style="background:#fbe6e0;color:#b23a1f">
+    ▼ Tiêu cực -0.73</span></div>
+  <div style="text-align:right;font-family:monospace">100</div>
+  <div style="text-align:right;font-family:monospace">9.8</div>
+  <div style="text-align:right;font-family:monospace">4.3%</div>
+  <div><a href="nhiet_than_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">🔥 nhiet than</a></div>
+</div>
+</div>
+
+  
+    <div class="card" style="margin-top:18px;padding:14px 18px;background:#fafaf6">
+      <h3 style="margin-bottom:6px">📋 Phương pháp luận verdict</h3>
+      <p class="note">Score chạy từ −1 (bearish mạnh) đến +1 (bullish mạnh). Ngưỡng phân loại:
+      bullish ≥ +0.30 · neutral · bearish ≤ −0.30. Weighted theo driver:</p>
+      <ul style="font-size:12px;color:var(--ink);line-height:1.7;padding-left:20px;margin-top:6px">
+        <li><b>Thủy điện:</b> ENSO forecast 6m (55%) + 40 hồ z-score 5Y (45%)</li>
+        <li><b>Nhiệt than:</b> Share huy động YoY (70%) + giá than NK (chưa có)</li>
+        <li><b>Điện khí:</b> Share huy động YoY (70%) + giá khí/Brent (chưa có)</li>
+        <li><b>NLMT/gió:</b> Share huy động YoY (50%) + chính sách FIT/DPPA &lt; 12T (50%)</li>
+        <li><b>Per ticker:</b> Σ(branch_score × exposure%), exposure được set tay theo profile DN.</li>
+      </ul>
+    </div>
+
+  <div class="footer">
+  <p><strong>Nguồn dữ liệu:</strong> findicator.vn (electricity/*) · OCBS Research · Generated 2026-05-25 00:43</p>
+  <p style="margin-top:4px">Báo cáo chỉ nhằm mục đích tham khảo, không phải khuyến nghị đầu tư.
+  Nhà đầu tư cần tự đánh giá rủi ro trước khi đưa ra quyết định.</p>
+</div>
+</div>
+
+<script>
+const D = {"all_dates": ["2021-06-01", "2021-07-01", "2021-08-01", "2021-09-01", "2021-10-01", "2021-11-01", "2021-12-01", "2022-01-01", "2022-02-01", "2022-03-01", "2022-04-01", "2022-05-01", "2022-06-01", "2022-07-01", "2022-08-01", "2022-09-01", "2022-10-01", "2022-11-01", "2022-12-01", "2023-01-01", "2023-02-01", "2023-03-01", "2023-04-01", "2023-05-01", "2023-06-01", "2023-07-01", "2023-08-01", "2023-09-01", "2023-10-01", "2023-11-01", "2023-12-01", "2024-01-01", "2024-02-01", "2024-03-01", "2024-04-01", "2024-05-01", "2024-06-01", "2024-07-01", "2024-08-01", "2024-09-01", "2024-10-01", "2024-11-01", "2024-12-01", "2025-01-01", "2025-02-01", "2025-03-01", "2025-04-01", "2025-05-01", "2025-06-01", "2025-07-01", "2025-08-01", "2025-09-01", "2025-10-01", "2025-11-01", "2025-12-01", "2026-01-01", "2026-02-01", "2026-03-01", "2026-04-01", "2026-05-01"], "res_datasets": [{"label": "Thủy điện", "values": [6.45, 7.83, 8.21, 8.18, 8.81, 8.55, 5.37, 5.5, 5.35, 5.63, 5.74, 8.31, 11.05, 11.0, 10.67, 9.63, 9.54, 9.55, 9.55, 5.5, 5.07, 4.81, 5.25, 4.72, 4.48, 6.97, 11.75, 9.5, 8.69, 7.83, 7.55, 4.79, 3.0, 2.83, 3.68, 4.68, 9.544300003051758, 12.267299957275393, 13.010199981689452, 11.823600067138672, 10.585300048828126, 6.64370004272461, 5.774999984741211, 4.926599975585938, 4.360700019836425, 4.489300010681152, 4.6526999740600585, 7.247699951171875, 10.717999893188477, 12.935700073242188, 12.819500030517576, 12.63770004272461, 12.789600006103516, 10.386799926757812, 7.520300003051758, 5.910899978637695, 4.076999984741211, 4.921999977111817, 4.806300003051758, 4.6373999938964845], "color": "#2f6fb0"}, {"label": "Điện than", "values": [12.54, 10.19, 8.37, 7.44, 8.11, 7.54, 7.66, 9.51, 7.76, 11.1, 10.72, 9.03, 7.67, 8.15, 7.73, 7.48, 7.41, 7.3, 7.3, 7.58, 8.99, 11.46, 11.89, 13.76, 13.08, 13.19, 8.13, 9.12, 10.54, 9.93, 9.81, 12.75, 11.21, 16.03, 16.71, 17.11, 12.403199951171874, 10.10339990234375, 10.330199920654296, 8.653000015258788, 10.7205, 13.012799987792969, 13.845900024414062, 12.41340007019043, 12.458600006103516, 15.964299865722657, 15.907799926757813, 15.902099975585935, 12.143899963378908, 10.157999908447266, 11.0185, 9.55970002746582, 9.05909994506836, 8.78010009765625, 12.507, 13.431899993896485, 11.167099975585938, 16.051899993896484, 17.864, 12.243400024414065], "color": "#5f6b64"}, {"label": "Điện khí", "values": [2.38, 2.29, 1.84, 1.13, 1.52, 1.92, 1.79, 2.33, 2.05, 3.18, 2.86, 2.55, 2.25, 2.17, 2.28, 2.11, 2.09, 2.05, 2.05, 1.88, 2.44, 2.82, 2.85, 3.4, 3.23, 2.62, 1.25, 0.33, 2.08, 1.9, 1.92, 1.85, 1.83, 2.38, 2.66, 2.64, 1.9507999782562253, 1.5319999961853028, 1.4990000076293946, 1.0590999946594235, 1.265499990463257, 1.4841000022888184, 1.88910001373291, 1.357399995803833, 1.3403000049591065, 1.9645, 2.2092999992370603, 1.8321000137329104, 1.5704999961853028, 1.672099994659424, 1.428199993133545, 1.5054000034332276, 1.778800003051758, 1.904799991607666, 1.7897000045776368, 1.9198999938964845, 1.384599998474121, 2.095699977874756, 2.8257000122070317, 1.6957999839782716], "color": "#d4660c"}, {"label": "Điện gió", "values": [null, null, null, null, null, null, null, 1.04, 1.36, 0.55, 0.66, 0.58, 0.48, 0.57, 0.6, 0.54, 0.53, 0.52, 0.52, 1.21, 1.19, 1.07, 0.54, 0.66, 0.62, 0.77, 1.32, 0.63, 0.51, 1.32, 1.35, 1.84, 1.17, 1.42, 0.58, 0.6, 0.7698999977111817, 1.143199996471405, 0.6878999996185303, 0.8604999928474426, 0.711899998664856, 1.5171000003814696, 1.674400005340576, 1.4760000047683717, 1.5634999933242797, 1.4434000000953675, 0.8822000017166137, 0.4824999976158142, 0.9601999950408936, 1.6698999862670898, 0.9630999994277956, 0.6772000045776367, 0.8703000006675721, 1.4412999863624574, 2.091999988555908, 1.9828000240325927, 1.8272000188827515, 1.720700005531311, 0.7816000003814697, 0.852599998474121], "color": "#2a9d8f"}, {"label": "Điện mặt trời", "values": [null, null, null, null, null, null, null, 1.84, 2.41, 2.61, 2.45, 2.42, 2.52, 2.29, 2.28, 1.92, 1.91, 1.9, 1.9, 1.7, 2.17, 2.58, 2.45, 2.45, 2.33, 1.8, 2.85, 2.12, 1.9, 1.75, 1.75, 2.12, 2.06, 2.43, 2.6, 2.37, 2.5143999900817877, 2.0796000003814696, 2.546199998855591, 1.8692999963760373, 2.046899995803833, 1.9723999996185304, 1.4534999952316283, 2.0656999874114987, 2.0011999921798704, 2.5976999988555907, 2.6415999908447265, 2.475, 1.8925000019073488, 1.8737000045776369, 1.9360000085830689, 1.636299988746643, 1.4741999945640565, 1.224599997520447, 1.9925999984741207, 2.308200002670288, 1.9937000036239625, 2.67920001411438, 2.691000005722046, 1.8203000030517575], "color": "#E4A025"}, {"label": "Nhập khẩu và khác", "values": [0.06, 0.1, 0.16, 0.13, 0.18, 0.15, 0.1, 0.32, 0.0, 0.13, 0.09, 0.31, 0.47, 0.3, 0.29, 0.39, 0.38, 0.38, 0.38, 0.37, 0.37, 0.21, 0.15, 0.35, 0.34, 0.43, 0.4, 0.48, 0.46, 0.4, 0.22, 0.04, 0.49, 0.62, 0.5, 0.55, 0.6189999997615814, 0.5739999996423721, 0.5471000046730041, 0.5305000014305115, 0.5516000036001205, 0.315900001168251, 0.4285999987125397, 0.5849999997615815, 0.514600001335144, 0.6097000021934509, 0.5495000004768371, 0.670800003528595, 0.9584999973773956, 1.119099999666214, 1.0709000020027162, 1.0412000017166136, 1.294400004386902, 1.2945000042915344, 1.1717000019550323, 1.3268999996185302, 0.9295999987125396, 1.1285000009536743, 1.036699999332428, 0.8546999988555909], "color": "#7a5ea8"}], "enso_labels": ["2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-04", "2026-04", "2026-04", "2026-04", "2026-04", "2026-04", "2026-04", "2026-04"], "enso_lanina": [0, 0, 0, -0.1, -0.3, -0.4, -0.5, -0.6, -0.5, -0.4, -0.1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1], "enso_neutral": [null, null, null, null, null, null, null, null, null, null, null, null, 30, 12, 8, 6, 8, 8, 9, 11, 11], "enso_elnino": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 70, 88, 92, 94, 92, 92, 90, 88, 88], "enso_split_idx": 12, "cgm_labels": ["2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03"], "cgm_values": [1411.0, 1422.0, 1635.0, 1748.0, 1560.0, 1032.0, 1126.0, 1507.0, 987.0, 1497.0, 1566.0, 1590.0, 978.0, 1355.0, 1408.0, 1404.0, 1230.0, 1161.0, 637.0, 837.0, 690.0, 518.0, 290.0, 885.0, 1141.0, 1191.0, 1538.0]};
+
+// ENSO chart
+(function(){
+  const ctx = document.getElementById('ch-enso');
+  if(!ctx) return;
+  new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: D.enso_labels,
+      datasets:[
+        {label:'La Niña %', data:D.enso_lanina, borderColor:'#2f6fb0',
+         backgroundColor:'rgba(47,111,176,.1)', borderWidth:2, tension:.3, fill:false, pointRadius:2},
+        {label:'Neutral %', data:D.enso_neutral, borderColor:'#999',
+         borderWidth:1.5, borderDash:[4,4], tension:.3, pointRadius:0},
+        {label:'El Niño %', data:D.enso_elnino, borderColor:'#c0492f',
+         backgroundColor:'rgba(192,73,47,.1)', borderWidth:2, tension:.3, fill:false, pointRadius:2}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top', labels:{font:{size:11}}},
+        annotation:{}
+      },
+      scales:{
+        x:{ticks:{font:{size:9}, maxRotation:0, maxTicksLimit:12}, grid:{display:false}},
+        y:{min:0, max:100, ticks:{callback:v=>v+'%',font:{size:10}}}
+      }
+    }
+  });
+})();
+
+// Cơ cấu nguồn stacked area
+(function(){
+  const ctx = document.getElementById('ch-res');
+  if(!ctx) return;
+  const labels = D.all_dates.map(d => d.substring(0,7));
+  const datasets = D.res_datasets.map(d => ({
+    label: d.label, data: d.values, borderColor: d.color, backgroundColor: d.color+'33',
+    borderWidth:1.5, pointRadius:0, tension:.3, fill:true, stack:'res'
+  }));
+  new Chart(ctx, {
+    type:'line', data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'top', labels:{font:{size:10}, boxWidth:12}}},
+      scales:{
+        x:{ticks:{font:{size:9}, maxRotation:0, maxTicksLimit:10}, grid:{display:false}},
+        y:{stacked:true, max:100, ticks:{callback:v=>v+'%',font:{size:10}}}
+      }
+    }
+  });
+})();
+
+// CGM giá
+(function(){
+  const ctx = document.getElementById('ch-cgm');
+  if(!ctx) return;
+  new Chart(ctx, {
+    type:'line',
+    data:{labels:D.cgm_labels, datasets:[
+      {data:D.cgm_values, borderColor:'#E4A025', backgroundColor:'rgba(228,160,37,.12)',
+        borderWidth:2, pointRadius:2, tension:.3, fill:true}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>c.raw?.toLocaleString('vi')+' đ/kWh'}}},
+      scales:{
+        x:{ticks:{font:{size:9}, maxRotation:0, maxTicksLimit:12}, grid:{display:false}},
+        y:{ticks:{font:{size:10}, callback:v=>v.toLocaleString('vi')}}
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

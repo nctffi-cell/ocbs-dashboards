@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Điện — Nhiệt than · OCBS Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#FAFAF7;--ink:#1a2420;--muted:#5f6b64;--line:#e7e6df;
+  --green:#008C44;--green-d:#05623a;--gold:#E4A025;--card:#fff;
+  --blue:#2f6fb0;--red:#c0492f;--teal:#2a9d8f;--orange:#d4660c;--purple:#7a5ea8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5}
+
+/* ── Topbar ───────────────────────────────────────────────────────── */
+.topbar{background:var(--green-d);color:#fff;padding:14px 32px;display:flex;align-items:center;gap:14px}
+.topbar img{height:30px;width:auto}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.3px}
+.topbar .upd{font-size:11px;opacity:.7;margin-left:auto}
+
+/* ── Layout ───────────────────────────────────────────────────────── */
+.wrap{max-width:1400px;margin:0 auto;padding:24px 20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px}
+
+/* ── Cards ────────────────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+.card h3{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.card .note{font-size:11px;color:var(--muted);margin-bottom:14px}
+.chart-box{position:relative}
+
+/* ── KPI strip ────────────────────────────────────────────────────── */
+.kpi-strip{display:grid;gap:14px;margin-bottom:28px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.kpi-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:6px}
+.kpi-val{font-size:24px;font-weight:800;line-height:1.1}
+.kpi-unit{font-size:13px;font-weight:500}
+.kpi-sub{font-size:12px;margin-top:4px}
+.kpi-dt{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ── Section title ────────────────────────────────────────────────── */
+.sec-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+           color:var(--muted);margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+
+/* ── Filter buttons ───────────────────────────────────────────────── */
+.filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fbtn{background:none;border:1px solid var(--line);border-radius:5px;padding:3px 10px;
+      font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+.fbtn.active,.fbtn:hover{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* ── Company table ────────────────────────────────────────────────── */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{background:#f4f4f0;font-size:10.5px;font-weight:700;text-transform:uppercase;
+        letter-spacing:.6px;color:var(--muted);padding:8px 10px;border-bottom:2px solid var(--line)}
+.tbl th.r,.tbl td.td-r{text-align:right}
+.tbl td{padding:9px 10px;border-bottom:1px solid #f0ede5}
+.tbl tbody tr:hover{background:#f9f8f3}
+.td-tk{font-weight:700;color:var(--green);font-family:monospace;font-size:13px}
+.td-name{color:var(--ink)}
+.td-pos{font-weight:600;color:var(--green-d)}
+.td-neg{font-weight:600;color:var(--red)}
+
+/* ── Nowcast badge ────────────────────────────────────────────────── */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-up{background:#e3f3e9;color:#0a7a3e}
+.badge-dn{background:#fbe6e0;color:#b23a1f}
+.badge-flat{background:#eef0ee;color:#5f6b64}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.footer{margin-top:32px;padding:18px 0;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media(max-width:1000px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.kpi-strip,.g2,.g3{grid-template-columns:1fr}}
+
+
+/* Verdict banner */
+.verdict-banner{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.verdict-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+  border-left:5px solid var(--line);transition:.2s}
+.verdict-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-2px)}
+.verdict-card a{text-decoration:none;color:inherit;display:block}
+.verdict-icon{font-size:28px;line-height:1}
+.verdict-name{font-size:14px;font-weight:700;color:var(--ink);margin:8px 0 4px}
+.verdict-label{display:inline-block;padding:3px 10px;border-radius:14px;font-size:11px;font-weight:700;margin-bottom:8px}
+.verdict-score{font-size:11px;color:var(--muted);margin-bottom:8px;font-family:monospace}
+.verdict-narrative{font-size:12.5px;line-height:1.5;color:var(--ink)}
+.verdict-arrow{font-size:10.5px;color:var(--green);margin-top:8px;font-weight:600}
+
+/* Anchor nav giữa các sub-page */
+.subnav{background:#fff;border-bottom:1px solid var(--line);padding:10px 32px;display:flex;gap:8px;
+  overflow-x:auto;position:sticky;top:0;z-index:10}
+.subnav a{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;color:var(--muted);
+  text-decoration:none;border:1px solid var(--line);white-space:nowrap;transition:.15s}
+.subnav a:hover{background:var(--green);color:#fff;border-color:var(--green)}
+.subnav a.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* Ticker matrix */
+.ticker-row{display:grid;grid-template-columns:60px 1fr 90px 70px 70px 70px 1fr;gap:10px;align-items:center;
+  padding:10px 12px;border-bottom:1px solid #f0ede5;font-size:12.5px}
+.ticker-row.head{background:#f4f4f0;font-size:10.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--muted);border-bottom:2px solid var(--line)}
+.ticker-row .tk{font-weight:700;color:var(--green);font-family:monospace;font-size:13.5px}
+.ticker-row .branch-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.ticker-row .verdict-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;text-align:center;min-width:80px}
+
+/* Driver list */
+.driver-list{list-style:none;padding:0;margin:0}
+.driver-list li{padding:12px 14px;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fafaf6}
+.driver-list .dname{font-weight:700;font-size:12.5px;color:var(--ink);margin-bottom:4px}
+.driver-list .ddetail{font-size:12px;color:var(--muted);font-family:monospace;margin-bottom:4px}
+.driver-list .dinterp{font-size:12.5px;color:var(--ink);line-height:1.5}
+.driver-list .dscore{display:inline-block;padding:1px 7px;border-radius:8px;font-size:10.5px;font-weight:700;font-family:monospace;margin-left:8px}
+
+/* Lake heatmap */
+.lake-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.lake-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px}
+.lake-card .lname{font-weight:700;color:var(--ink);font-size:12.5px;margin-bottom:2px}
+.lake-card .lmeta{color:var(--muted);font-size:10.5px;margin-bottom:8px}
+.lake-card .lval{font-size:18px;font-weight:800;line-height:1}
+.lake-card .lz{font-size:11px;font-weight:600;font-family:monospace;margin-top:3px}
+
+@media(max-width:900px){.verdict-banner{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.verdict-banner{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="topbar">
+  <img src="https://ocbs.com.vn/images/logo-white.png" alt="OCBS" onerror="this.style.display='none'">
+  <h1>Dashboard Ngành Điện — Nhiệt than</h1>
+  <span class="upd">OCBS Research · Cập nhật: 2026-05-25 00:43</span>
+</div>
+<div class="subnav"><a href="tong_hop_latest.html" class="">🏠 Tổng hợp</a><a href="thuy_dien_latest.html" class="">💧 Thủy điện</a><a href="nhiet_than_latest.html" class="active">🔥 Nhiệt than</a><a href="dien_khi_latest.html" class="">⛽ Điện khí</a><a href="nlmt_gio_latest.html" class="">☀️ NLMT / Gió</a></div>
+<div class="wrap">
+  <div class="card" style="border-left:5px solid #b23a1f;background:#fbe6e0;margin-bottom:18px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--muted)">Verdict Nhiệt than</div>
+    <div style="font-size:24px;font-weight:800;color:#b23a1f;margin:4px 0">
+      ▼ Tiêu cực (score -0.73)
+    </div>
+    <p style="font-size:14px;line-height:1.7;color:var(--ink);margin-top:10px">Cơ cấu nhiệt than trong tổng phát điện (2026-05-01: 12.2% (Δ -3.7pp YoY)) giảm rõ, cho thấy NLMT/gió và thủy điện đang chiếm chỗ — các nhà máy than gặp khó về huy động. Giá than NK chưa có data tự động trong dashboard — cần theo dõi giá than Newcastle và tỷ giá USD để đánh giá biên gộp. ➜ <b>Nhóm nhiệt than chịu áp lực kép: huy động giảm và rủi ro chính sách carbon. Phù hợp các nhà đầu tư yield-seeker chấp nhận chu kỳ.</b></p>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>Share trong cơ cấu phát điện (%)</h3>
+      <p class="note">5 năm. Đi lên = được huy động nhiều hơn.</p>
+      <div class="chart-box" style="height:280px"><canvas id="ch-share"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Driver chi tiết</h3>
+      <ul class="driver-list"><li>
+  <div class="dname">Share nhiệt than YoY<span class="dscore" style="background:#fbe6e0;color:#b23a1f">-0.73</span></div>
+  <div class="ddetail">2026-05-01: 12.2% (Δ -3.7pp YoY)</div>
+  <div class="dinterp">Huy động giảm (cầu yếu hoặc renew thay thế)</div>
+</li><li>
+  <div class="dname">Giá than NK (USD/tấn)<span class="dscore" style="background:#eef0ee;color:#5f6b64">N/A</span></div>
+  <div class="ddetail">— (chưa có data findicator/wichart; cần WebFetch)</div>
+  <div class="dinterp">Cần bổ sung nguồn để đánh giá biên gộp</div>
+</li></ul>
+    </div>
+  </div>
+
+  <div class="sec-title">Sản lượng per-nhà máy thuộc nhánh Nhiệt than</div>
+
+  <div class="card">
+    <p class="note">Tổng sản lượng 12 tháng gần nhất (triệu kWh) — từ findicator electric-output-plant.</p>
+    <table class="tbl" style="margin-top:8px">
+      <thead><tr><th>Nhà máy</th><th>Mã CK</th><th class="r">Sản lượng 12T</th></tr></thead>
+      <tbody><tr>
+      <td class="td-name">Nhiệt điện Ninh Bình - NBP</td>
+      <td class="td-tk">NBP</td>
+      <td class="td-r"><b>101</b> <span style="color:var(--muted);font-size:10px">triệu kWh / 12T</span></td>
+    </tr></tbody>
+    </table>
+  </div>
+
+  <div class="sec-title">Cổ phiếu Nhiệt than</div>
+
+  <div class="card" style="padding:14px 16px">
+  <h3 style="margin-bottom:10px">Bảng cổ phiếu liên đới — verdict per ticker</h3>
+  <p class="note">16 mã chia 4 nhánh. Verdict = weighted score theo exposure profile từng nhánh.</p>
+  <div class="ticker-row head"><div>Mã</div><div>Lý do</div><div class="tk">Verdict</div><div class="td-r">Vốn hóa</div><div class="td-r">P/E</div><div class="td-r">ROE</div><div>Drill-down</div></div><div class="ticker-row">
+  <div class="tk">POW</div>
+  <div style="font-size:11.5px;color:var(--ink)">60% Điện khí</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.22</span></div>
+  <div style="text-align:right;font-family:monospace">39,882</div>
+  <div style="text-align:right;font-family:monospace">12.9</div>
+  <div style="text-align:right;font-family:monospace">10.0%</div>
+  <div><a href="dien_khi_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">⛽ dien khi</a></div>
+</div><div class="ticker-row">
+  <div class="tk">QTP</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Nhiệt than · Huy động giảm (cầu yếu hoặc renew thay thế)</div>
+  <div><span class="verdict-pill" style="background:#fbe6e0;color:#b23a1f">
+    ▼ Tiêu cực -0.73</span></div>
+  <div style="text-align:right;font-family:monospace">5,850</div>
+  <div style="text-align:right;font-family:monospace">5.4</div>
+  <div style="text-align:right;font-family:monospace">19.6%</div>
+  <div><a href="nhiet_than_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">🔥 nhiet than</a></div>
+</div><div class="ticker-row">
+  <div class="tk">HND</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Nhiệt than · Huy động giảm (cầu yếu hoặc renew thay thế)</div>
+  <div><span class="verdict-pill" style="background:#fbe6e0;color:#b23a1f">
+    ▼ Tiêu cực -0.73</span></div>
+  <div style="text-align:right;font-family:monospace">5,550</div>
+  <div style="text-align:right;font-family:monospace">11.8</div>
+  <div style="text-align:right;font-family:monospace">7.8%</div>
+  <div><a href="nhiet_than_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">🔥 nhiet than</a></div>
+</div><div class="ticker-row">
+  <div class="tk">PPC</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Nhiệt than · Huy động giảm (cầu yếu hoặc renew thay thế)</div>
+  <div><span class="verdict-pill" style="background:#fbe6e0;color:#b23a1f">
+    ▼ Tiêu cực -0.73</span></div>
+  <div style="text-align:right;font-family:monospace">3,442</div>
+  <div style="text-align:right;font-family:monospace">16.1</div>
+  <div style="text-align:right;font-family:monospace">4.7%</div>
+  <div><a href="nhiet_than_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">🔥 nhiet than</a></div>
+</div><div class="ticker-row">
+  <div class="tk">NBP</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Nhiệt than · Huy động giảm (cầu yếu hoặc renew thay thế)</div>
+  <div><span class="verdict-pill" style="background:#fbe6e0;color:#b23a1f">
+    ▼ Tiêu cực -0.73</span></div>
+  <div style="text-align:right;font-family:monospace">100</div>
+  <div style="text-align:right;font-family:monospace">9.8</div>
+  <div style="text-align:right;font-family:monospace">4.3%</div>
+  <div><a href="nhiet_than_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">🔥 nhiet than</a></div>
+</div>
+</div>
+
+  <div class="footer">
+  <p><strong>Nguồn dữ liệu:</strong> findicator.vn electricity/* · OCBS Research · Generated 2026-05-25 00:43</p>
+  <p style="margin-top:4px">Báo cáo chỉ nhằm mục đích tham khảo, không phải khuyến nghị đầu tư.
+  Nhà đầu tư cần tự đánh giá rủi ro trước khi đưa ra quyết định.</p>
+</div>
+</div>
+
+<script>
+const D = {"series": [{"label": "Điện than", "labels": ["2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05"], "values": [12.54, 10.19, 8.37, 7.44, 8.11, 7.54, 7.66, 9.51, 7.76, 11.1, 10.72, 9.03, 7.67, 8.15, 7.73, 7.48, 7.41, 7.3, 7.3, 7.58, 8.99, 11.46, 11.89, 13.76, 13.08, 13.19, 8.13, 9.12, 10.54, 9.93, 9.81, 12.75, 11.21, 16.03, 16.71, 17.11, 12.403199951171874, 10.10339990234375, 10.330199920654296, 8.653000015258788, 10.7205, 13.012799987792969, 13.845900024414062, 12.41340007019043, 12.458600006103516, 15.964299865722657, 15.907799926757813, 15.902099975585935, 12.143899963378908, 10.157999908447266, 11.0185, 9.55970002746582, 9.05909994506836, 8.78010009765625, 12.507, 13.431899993896485, 11.167099975585938, 16.051899993896484, 17.864, 12.243400024414065], "color": "#5f6b64"}]};
+(function(){
+  const ctx = document.getElementById('ch-share');
+  if(!ctx) return;
+  // Merge all dates
+  const allDates = new Set();
+  D.series.forEach(s => s.labels.forEach(l => allDates.add(l)));
+  const labels = Array.from(allDates).sort();
+  const datasets = D.series.map(s => {
+    const dmap = {};
+    s.labels.forEach((l,i) => { dmap[l] = s.values[i]; });
+    return {label:s.label, data:labels.map(l=>dmap[l] ?? null), borderColor:s.color,
+            backgroundColor:s.color+'22', borderWidth:2, pointRadius:0, tension:.3, fill:true};
+  });
+  new Chart(ctx, {
+    type:'line', data:{labels, datasets},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'top', labels:{font:{size:10}}}},
+      scales:{
+        x:{ticks:{font:{size:9}, maxRotation:0, maxTicksLimit:10}, grid:{display:false}},
+        y:{ticks:{callback:v=>v+'%', font:{size:10}}}
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

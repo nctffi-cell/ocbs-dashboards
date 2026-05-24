@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Điện — Thủy điện · OCBS Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#FAFAF7;--ink:#1a2420;--muted:#5f6b64;--line:#e7e6df;
+  --green:#008C44;--green-d:#05623a;--gold:#E4A025;--card:#fff;
+  --blue:#2f6fb0;--red:#c0492f;--teal:#2a9d8f;--orange:#d4660c;--purple:#7a5ea8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5}
+
+/* ── Topbar ───────────────────────────────────────────────────────── */
+.topbar{background:var(--green-d);color:#fff;padding:14px 32px;display:flex;align-items:center;gap:14px}
+.topbar img{height:30px;width:auto}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.3px}
+.topbar .upd{font-size:11px;opacity:.7;margin-left:auto}
+
+/* ── Layout ───────────────────────────────────────────────────────── */
+.wrap{max-width:1400px;margin:0 auto;padding:24px 20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px}
+
+/* ── Cards ────────────────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+.card h3{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.card .note{font-size:11px;color:var(--muted);margin-bottom:14px}
+.chart-box{position:relative}
+
+/* ── KPI strip ────────────────────────────────────────────────────── */
+.kpi-strip{display:grid;gap:14px;margin-bottom:28px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.kpi-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:6px}
+.kpi-val{font-size:24px;font-weight:800;line-height:1.1}
+.kpi-unit{font-size:13px;font-weight:500}
+.kpi-sub{font-size:12px;margin-top:4px}
+.kpi-dt{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ── Section title ────────────────────────────────────────────────── */
+.sec-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+           color:var(--muted);margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+
+/* ── Filter buttons ───────────────────────────────────────────────── */
+.filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fbtn{background:none;border:1px solid var(--line);border-radius:5px;padding:3px 10px;
+      font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+.fbtn.active,.fbtn:hover{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* ── Company table ────────────────────────────────────────────────── */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{background:#f4f4f0;font-size:10.5px;font-weight:700;text-transform:uppercase;
+        letter-spacing:.6px;color:var(--muted);padding:8px 10px;border-bottom:2px solid var(--line)}
+.tbl th.r,.tbl td.td-r{text-align:right}
+.tbl td{padding:9px 10px;border-bottom:1px solid #f0ede5}
+.tbl tbody tr:hover{background:#f9f8f3}
+.td-tk{font-weight:700;color:var(--green);font-family:monospace;font-size:13px}
+.td-name{color:var(--ink)}
+.td-pos{font-weight:600;color:var(--green-d)}
+.td-neg{font-weight:600;color:var(--red)}
+
+/* ── Nowcast badge ────────────────────────────────────────────────── */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-up{background:#e3f3e9;color:#0a7a3e}
+.badge-dn{background:#fbe6e0;color:#b23a1f}
+.badge-flat{background:#eef0ee;color:#5f6b64}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.footer{margin-top:32px;padding:18px 0;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media(max-width:1000px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.kpi-strip,.g2,.g3{grid-template-columns:1fr}}
+
+
+/* Verdict banner */
+.verdict-banner{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.verdict-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+  border-left:5px solid var(--line);transition:.2s}
+.verdict-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.06);transform:translateY(-2px)}
+.verdict-card a{text-decoration:none;color:inherit;display:block}
+.verdict-icon{font-size:28px;line-height:1}
+.verdict-name{font-size:14px;font-weight:700;color:var(--ink);margin:8px 0 4px}
+.verdict-label{display:inline-block;padding:3px 10px;border-radius:14px;font-size:11px;font-weight:700;margin-bottom:8px}
+.verdict-score{font-size:11px;color:var(--muted);margin-bottom:8px;font-family:monospace}
+.verdict-narrative{font-size:12.5px;line-height:1.5;color:var(--ink)}
+.verdict-arrow{font-size:10.5px;color:var(--green);margin-top:8px;font-weight:600}
+
+/* Anchor nav giữa các sub-page */
+.subnav{background:#fff;border-bottom:1px solid var(--line);padding:10px 32px;display:flex;gap:8px;
+  overflow-x:auto;position:sticky;top:0;z-index:10}
+.subnav a{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;color:var(--muted);
+  text-decoration:none;border:1px solid var(--line);white-space:nowrap;transition:.15s}
+.subnav a:hover{background:var(--green);color:#fff;border-color:var(--green)}
+.subnav a.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* Ticker matrix */
+.ticker-row{display:grid;grid-template-columns:60px 1fr 90px 70px 70px 70px 1fr;gap:10px;align-items:center;
+  padding:10px 12px;border-bottom:1px solid #f0ede5;font-size:12.5px}
+.ticker-row.head{background:#f4f4f0;font-size:10.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--muted);border-bottom:2px solid var(--line)}
+.ticker-row .tk{font-weight:700;color:var(--green);font-family:monospace;font-size:13.5px}
+.ticker-row .branch-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.ticker-row .verdict-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;text-align:center;min-width:80px}
+
+/* Driver list */
+.driver-list{list-style:none;padding:0;margin:0}
+.driver-list li{padding:12px 14px;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;background:#fafaf6}
+.driver-list .dname{font-weight:700;font-size:12.5px;color:var(--ink);margin-bottom:4px}
+.driver-list .ddetail{font-size:12px;color:var(--muted);font-family:monospace;margin-bottom:4px}
+.driver-list .dinterp{font-size:12.5px;color:var(--ink);line-height:1.5}
+.driver-list .dscore{display:inline-block;padding:1px 7px;border-radius:8px;font-size:10.5px;font-weight:700;font-family:monospace;margin-left:8px}
+
+/* Lake heatmap */
+.lake-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.lake-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px}
+.lake-card .lname{font-weight:700;color:var(--ink);font-size:12.5px;margin-bottom:2px}
+.lake-card .lmeta{color:var(--muted);font-size:10.5px;margin-bottom:8px}
+.lake-card .lval{font-size:18px;font-weight:800;line-height:1}
+.lake-card .lz{font-size:11px;font-weight:600;font-family:monospace;margin-top:3px}
+
+@media(max-width:900px){.verdict-banner{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.verdict-banner{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="topbar">
+  <img src="https://ocbs.com.vn/images/logo-white.png" alt="OCBS" onerror="this.style.display='none'">
+  <h1>Dashboard Ngành Điện — Thủy điện</h1>
+  <span class="upd">OCBS Research · Cập nhật: 2026-05-25 00:43</span>
+</div>
+<div class="subnav"><a href="tong_hop_latest.html" class="">🏠 Tổng hợp</a><a href="thuy_dien_latest.html" class="active">💧 Thủy điện</a><a href="nhiet_than_latest.html" class="">🔥 Nhiệt than</a><a href="dien_khi_latest.html" class="">⛽ Điện khí</a><a href="nlmt_gio_latest.html" class="">☀️ NLMT / Gió</a></div>
+<div class="wrap">
+  <div class="card" style="border-left:5px solid #7a6a3a;background:#fbf5e2;margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;align-items:start;gap:14px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--muted)">Verdict thủy điện</div>
+        <div style="font-size:24px;font-weight:800;color:#7a6a3a;margin:4px 0">
+          → Trung tính (score -0.03)
+        </div>
+      </div>
+    </div>
+    <p style="font-size:14px;line-height:1.7;color:var(--ink);margin-top:10px">ENSO forecast 6 tháng tới (P(El Niño)=88% · P(La Niña)=0%) cho thấy El Niño đậm — rủi ro hạn hán cao, ảnh hưởng thẳng lưu lượng nước về hồ. Hiện tại mực nước 40 hồ (avg z-score = +9091.20σ (n=40 hồ)) vẫn duy trì cao hơn trung bình 5 năm, dự trữ còn dồi dào cho mùa khô. ➜ <b>Thủy điện ở thế giằng co</b>: rủi ro El Niño đã được hồ cao bù lại, phù hợp position-sizing trung lập, chờ xác nhận lượng mưa 2 tháng tới.</p>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>ENSO forecast — La Niña vs El Niño</h3>
+      <p class="note">12 tháng qua + 9 tháng dự báo. P(El Niño) cao = rủi ro hạn hán.</p>
+      <div class="chart-box" style="height:300px"><canvas id="ch-enso"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Driver chi tiết</h3>
+      <p class="note">Mỗi driver đóng góp 1 phần weighted vào score tổng.</p>
+      <ul class="driver-list"><li>
+  <div class="dname">ENSO forecast 6m<span class="dscore" style="background:#fbe6e0;color:#b23a1f">-0.88</span></div>
+  <div class="ddetail">P(El Niño)=88% · P(La Niña)=0%</div>
+  <div class="dinterp">El Niño đậm → hạn hán, thủy điện yếu</div>
+</li><li>
+  <div class="dname">Mực nước 40 hồ vs 5Y mean<span class="dscore" style="background:#e3f3e9;color:#0a7a3e">+1.00</span></div>
+  <div class="ddetail">avg z-score = +9091.20σ (n=40 hồ)</div>
+  <div class="dinterp">Hồ trên trung bình mạnh → dự trữ tốt</div>
+</li></ul>
+    </div>
+  </div>
+
+  <div class="sec-title">40 hồ thủy điện — z-score mực nước vs 5Y mean (40 hồ)</div>
+
+  <p style="font-size:12px;color:var(--muted);margin-bottom:12px">
+    Sắp xếp theo z-score giảm dần. <b style="color:#0a7a3e">z ≥ +0.5σ</b> hồ đầy hơn TB.
+    <b style="color:#b23a1f">z ≤ −0.5σ</b> hồ cạn hơn TB. Click mã ticker để hiểu hồ đó thuộc DN nào.
+  </p>
+  <div class="lake-grid"><div class="lake-card" style="border-left:3px solid #0a7a3e">
+  <div class="lname">A Lưới</div>
+  <div class="lmeta">Thừa Thiên Huế · Miền Trung · CHP</div>
+  <div class="lval" style="color:#0a7a3e">308850.4<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#0a7a3e;background:#e3f3e9;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = +344457.98σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #0a7a3e">
+  <div class="lname">Sê San 3A</div>
+  <div class="lmeta">Gia Lai · Tây Nguyên · —</div>
+  <div class="lval" style="color:#0a7a3e">3679.7<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#0a7a3e;background:#e3f3e9;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = +19216.57σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #0a7a3e">
+  <div class="lname">Huội Quảng</div>
+  <div class="lmeta">Lai Châu · Miền Bắc · —</div>
+  <div class="lval" style="color:#0a7a3e">369.4<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#0a7a3e;background:#e3f3e9;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = +0.71σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Buôn Kuop</div>
+  <div class="lmeta">Đăk Lăk · Tây Nguyên · —</div>
+  <div class="lval" style="color:#7a6a3a">410.8<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = +0.49σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Bản Vẽ</div>
+  <div class="lmeta">Nghệ An · Miền Trung · —</div>
+  <div class="lval" style="color:#7a6a3a">192.7<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = +0.42σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Kanak</div>
+  <div class="lmeta">Gia Lai · Tây Nguyên · —</div>
+  <div class="lval" style="color:#7a6a3a">508.7<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = +0.29σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Sông Hinh</div>
+  <div class="lmeta">Phú Yên · Miền Trung · VSH</div>
+  <div class="lval" style="color:#7a6a3a">206.0<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = +0.25σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Sông Tranh 2</div>
+  <div class="lmeta">Quảng Nam · Miền Trung · —</div>
+  <div class="lval" style="color:#7a6a3a">168.8<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = +0.19σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">An Khê</div>
+  <div class="lmeta">Gia Lai · Tây Nguyên · —</div>
+  <div class="lval" style="color:#7a6a3a">428.3<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = +0.19σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Đồng Văn</div>
+  <div class="lmeta">Nghệ An · Miền Trung · —</div>
+  <div class="lval" style="color:#7a6a3a">119.2<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.11σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Quảng trị</div>
+  <div class="lmeta">Quảng Trị · Miền Trung · —</div>
+  <div class="lval" style="color:#7a6a3a">473.9<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.13σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Đại Ninh</div>
+  <div class="lmeta">Lâm Đồng · Tây Nguyên · —</div>
+  <div class="lval" style="color:#7a6a3a">871.3<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.14σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Vĩnh Sơn C</div>
+  <div class="lmeta">Bình Định · Miền Trung · VSH</div>
+  <div class="lval" style="color:#7a6a3a">975.1<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.14σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Đắk Bla</div>
+  <div class="lmeta">Kon Tum · Tây Nguyên · —</div>
+  <div class="lval" style="color:#7a6a3a">552.4<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.23σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Sông Ba Hạ</div>
+  <div class="lmeta">Phú Yên · Miền Trung · SBH</div>
+  <div class="lval" style="color:#7a6a3a">103.3<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.24σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Hòa Bình</div>
+  <div class="lmeta">Hòa Bình · Miền Bắc · —</div>
+  <div class="lval" style="color:#7a6a3a">107.9<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.24σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Lai Châu</div>
+  <div class="lmeta">Lai Châu · Miền Bắc · —</div>
+  <div class="lval" style="color:#7a6a3a">291.2<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.29σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">SeSan4</div>
+  <div class="lmeta">Gia Lai · Tây Nguyên · —</div>
+  <div class="lval" style="color:#7a6a3a">212.8<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.38σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Vĩnh Sơn A</div>
+  <div class="lmeta">Bình Định · Miền Trung · VSH</div>
+  <div class="lval" style="color:#7a6a3a">770.3<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.43σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Hương Điền</div>
+  <div class="lmeta">Thừa Thiên Huế · Miền Trung · —</div>
+  <div class="lval" style="color:#7a6a3a">53.7<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.43σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #7a6a3a">
+  <div class="lname">Sông Bung 4</div>
+  <div class="lmeta">Quảng Nam · Miền Trung · —</div>
+  <div class="lval" style="color:#7a6a3a">216.1<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#7a6a3a;background:#fbf5e2;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.47σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Trị An</div>
+  <div class="lmeta">Đồng Nai · Miền Nam · —</div>
+  <div class="lval" style="color:#b23a1f">57.5<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.60σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Đơn Dương</div>
+  <div class="lmeta">Lâm Đồng · Tây Nguyên · —</div>
+  <div class="lval" style="color:#b23a1f">1030.5<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.62σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Ialy</div>
+  <div class="lmeta">Kon Tum · Tây Nguyên · —</div>
+  <div class="lval" style="color:#b23a1f">501.6<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.68σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Sê San 3</div>
+  <div class="lmeta">Gia Lai · Tây Nguyên · —</div>
+  <div class="lval" style="color:#b23a1f">303.7<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.72σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">A Vương</div>
+  <div class="lmeta">Quảng Nam · Miền Trung · —</div>
+  <div class="lval" style="color:#b23a1f">367.9<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.75σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Thượng Kon Tum</div>
+  <div class="lmeta">Kon Tum · Tây Nguyên · VSH</div>
+  <div class="lval" style="color:#b23a1f">1150.5<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.76σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Tuyên Quang</div>
+  <div class="lmeta">Tuyên Quang · Miền Bắc · —</div>
+  <div class="lval" style="color:#b23a1f">110.3<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.80σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Đồng Nai 3</div>
+  <div class="lmeta">Đăk Nông · Tây Nguyên · —</div>
+  <div class="lval" style="color:#b23a1f">578.9<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.85σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Pleikrông</div>
+  <div class="lmeta">Kon Tum · Tây Nguyên · —</div>
+  <div class="lval" style="color:#b23a1f">558.8<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.88σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Hàm Thuận</div>
+  <div class="lmeta">Lâm Đồng · Tây Nguyên · —</div>
+  <div class="lval" style="color:#b23a1f">589.9<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -0.89σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Buôn Tua Srah</div>
+  <div class="lmeta">Đăk Lăk · Tây Nguyên · —</div>
+  <div class="lval" style="color:#b23a1f">476.4<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -1.01σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Sơn La</div>
+  <div class="lmeta">Sơn La · Miền Bắc · —</div>
+  <div class="lval" style="color:#b23a1f">196.7<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -1.07σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Thác Bà</div>
+  <div class="lmeta">Yên Bái · Miền Bắc · TBC</div>
+  <div class="lval" style="color:#b23a1f">51.7<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -1.22σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Sê San 4A</div>
+  <div class="lmeta">Gia Lai · Tây Nguyên · —</div>
+  <div class="lval" style="color:#b23a1f">152.2<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -1.27σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Thác Mơ</div>
+  <div class="lmeta">Bình Phước · Miền Nam · TMP</div>
+  <div class="lval" style="color:#b23a1f">207.1<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -1.32σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Hủa Na</div>
+  <div class="lmeta">Thanh Hóa · Miền Trung · —</div>
+  <div class="lval" style="color:#b23a1f">225.7<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -1.33σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Srepok 3</div>
+  <div class="lmeta">Đăk Lăk · Tây Nguyên · —</div>
+  <div class="lval" style="color:#b23a1f">268.4<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -1.85σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Bản Chát</div>
+  <div class="lmeta">Lai Châu · Miền Bắc · —</div>
+  <div class="lval" style="color:#b23a1f">435.1<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -4.00σ
+  </div>
+</div><div class="lake-card" style="border-left:3px solid #b23a1f">
+  <div class="lname">Vĩnh Sơn B</div>
+  <div class="lmeta">Bình Định · Miền Trung · VSH</div>
+  <div class="lval" style="color:#b23a1f">802.0<span style="font-size:10px;color:var(--muted)"> m</span></div>
+  <div class="lz" style="color:#b23a1f;background:#fbe6e0;display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px">
+    z = -5.12σ
+  </div>
+</div></div>
+
+  <div class="sec-title">Cổ phiếu thủy điện đáng theo dõi</div>
+
+  <div class="card" style="padding:14px 16px">
+  <h3 style="margin-bottom:10px">Bảng cổ phiếu liên đới — verdict per ticker</h3>
+  <p class="note">16 mã chia 4 nhánh. Verdict = weighted score theo exposure profile từng nhánh.</p>
+  <div class="ticker-row head"><div>Mã</div><div>Lý do</div><div class="tk">Verdict</div><div class="td-r">Vốn hóa</div><div class="td-r">P/E</div><div class="td-r">ROE</div><div>Drill-down</div></div><div class="ticker-row">
+  <div class="tk">VSH</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">10,229</div>
+  <div style="text-align:right;font-family:monospace">11.9</div>
+  <div style="text-align:right;font-family:monospace">17.5%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">CHP</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">4,493</div>
+  <div style="text-align:right;font-family:monospace">10.4</div>
+  <div style="text-align:right;font-family:monospace">21.3%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">TMP</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">3,850</div>
+  <div style="text-align:right;font-family:monospace">15.0</div>
+  <div style="text-align:right;font-family:monospace">20.0%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">SHP</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">3,471</div>
+  <div style="text-align:right;font-family:monospace">10.8</div>
+  <div style="text-align:right;font-family:monospace">25.6%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">TBC</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">2,264</div>
+  <div style="text-align:right;font-family:monospace">9.7</div>
+  <div style="text-align:right;font-family:monospace">20.8%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">SBA</div>
+  <div style="font-size:11.5px;color:var(--ink)">100% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.03</span></div>
+  <div style="text-align:right;font-family:monospace">1,724</div>
+  <div style="text-align:right;font-family:monospace">10.3</div>
+  <div style="text-align:right;font-family:monospace">16.4%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">HDG</div>
+  <div style="font-size:11.5px;color:var(--ink)">70% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.07</span></div>
+  <div style="text-align:right;font-family:monospace">10,951</div>
+  <div style="text-align:right;font-family:monospace">18.2</div>
+  <div style="text-align:right;font-family:monospace">10.5%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">PC1</div>
+  <div style="font-size:11.5px;color:var(--ink)">55% NLMT / Điện gió</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.10</span></div>
+  <div style="text-align:right;font-family:monospace">11,639</div>
+  <div style="text-align:right;font-family:monospace">9.9</div>
+  <div style="text-align:right;font-family:monospace">17.7%</div>
+  <div><a href="nlmt_gio_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">☀️ nlmt gio</a></div>
+</div><div class="ticker-row">
+  <div class="tk">GEG</div>
+  <div style="font-size:11.5px;color:var(--ink)">85% NLMT / Điện gió</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.13</span></div>
+  <div style="text-align:right;font-family:monospace">6,865</div>
+  <div style="text-align:right;font-family:monospace">12.9</div>
+  <div style="text-align:right;font-family:monospace">9.1%</div>
+  <div><a href="nlmt_gio_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">☀️ nlmt gio</a></div>
+</div><div class="ticker-row">
+  <div class="tk">REE</div>
+  <div style="font-size:11.5px;color:var(--ink)">50% Thủy điện · El Niño đậm → hạn hán, thủy điện yếu</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.15</span></div>
+  <div style="text-align:right;font-family:monospace">37,104</div>
+  <div style="text-align:right;font-family:monospace">17.3</div>
+  <div style="text-align:right;font-family:monospace">13.6%</div>
+  <div><a href="thuy_dien_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">💧 thuy dien</a></div>
+</div><div class="ticker-row">
+  <div class="tk">POW</div>
+  <div style="font-size:11.5px;color:var(--ink)">60% Điện khí</div>
+  <div><span class="verdict-pill" style="background:#fbf5e2;color:#7a6a3a">
+    → Trung tính -0.22</span></div>
+  <div style="text-align:right;font-family:monospace">39,882</div>
+  <div style="text-align:right;font-family:monospace">12.9</div>
+  <div style="text-align:right;font-family:monospace">10.0%</div>
+  <div><a href="dien_khi_latest.html" style="color:var(--green);font-size:11px;text-decoration:none">⛽ dien khi</a></div>
+</div>
+</div>
+
+  <div class="footer">
+  <p><strong>Nguồn dữ liệu:</strong> findicator.vn lake-level + enso-forecast · OCBS Research · Generated 2026-05-25 00:43</p>
+  <p style="margin-top:4px">Báo cáo chỉ nhằm mục đích tham khảo, không phải khuyến nghị đầu tư.
+  Nhà đầu tư cần tự đánh giá rủi ro trước khi đưa ra quyết định.</p>
+</div>
+</div>
+
+<script>
+const D = {"enso_labels": ["2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-04", "2026-04", "2026-04", "2026-04", "2026-04", "2026-04", "2026-04", "2026-04"], "enso_lanina": [0, 0, 0, -0.1, -0.3, -0.4, -0.5, -0.6, -0.5, -0.4, -0.1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1], "enso_neutral": [null, null, null, null, null, null, null, null, null, null, null, null, 30, 12, 8, 6, 8, 8, 9, 11, 11], "enso_elnino": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 70, 88, 92, 94, 92, 92, 90, 88, 88]};
+(function(){
+  const ctx = document.getElementById('ch-enso');
+  if(!ctx) return;
+  new Chart(ctx, {
+    type:'line',
+    data:{labels: D.enso_labels, datasets:[
+      {label:'La Niña %', data:D.enso_lanina, borderColor:'#2f6fb0',
+       backgroundColor:'rgba(47,111,176,.12)', borderWidth:2, tension:.3, fill:false, pointRadius:2},
+      {label:'Neutral %', data:D.enso_neutral, borderColor:'#999',
+       borderWidth:1.5, borderDash:[4,4], tension:.3, pointRadius:0},
+      {label:'El Niño %', data:D.enso_elnino, borderColor:'#c0492f',
+       backgroundColor:'rgba(192,73,47,.12)', borderWidth:2, tension:.3, fill:false, pointRadius:2}
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'top'}}, scales:{y:{min:0,max:100}}}
+  });
+})();
+</script>
+</body>
+</html>
