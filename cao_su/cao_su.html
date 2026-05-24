@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Ngành Cao Su — OCBS Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#FAFAF7;--ink:#1a2420;--muted:#5f6b64;--line:#e7e6df;
+  --green:#008C44;--green-d:#05623a;--gold:#E4A025;--card:#fff;
+  --blue:#2f6fb0;--red:#c0492f;--teal:#2a9d8f;--orange:#d4660c;--purple:#7a5ea8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5}
+
+.topbar{background:var(--green-d);color:#fff;padding:14px 32px;display:flex;align-items:center;gap:14px}
+.topbar img{height:30px;width:auto}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.3px}
+.topbar .upd{font-size:11px;opacity:.7;margin-left:auto}
+
+.wrap{max-width:1400px;margin:0 auto;padding:24px 20px}
+
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.kpi-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:6px}
+.kpi-val{font-size:24px;font-weight:800;line-height:1.1}
+.kpi-unit{font-size:13px;font-weight:500}
+.kpi-sub{font-size:12px;margin-top:4px}
+.kpi-dt{font-size:11px;color:var(--muted);margin-top:2px}
+
+.sec-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+            color:var(--muted);margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+.card h3{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.card .note{font-size:11px;color:var(--muted);margin-bottom:14px}
+.chart-box{position:relative}
+
+/* Filter buttons */
+.filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fbtn{background:none;border:1px solid var(--line);border-radius:5px;padding:3px 10px;
+        font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+.fbtn.active,.fbtn:hover{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* Table */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{background:#f4f4f0;font-size:10.5px;font-weight:700;text-transform:uppercase;
+          letter-spacing:.6px;color:var(--muted);padding:8px 10px;border-bottom:2px solid var(--line)}
+.tbl th.r,.tbl td.td-r{text-align:right}
+.tbl td{padding:9px 10px;border-bottom:1px solid #f0ede5}
+.tbl tbody tr:hover{background:#f9f8f3}
+.td-tk{font-weight:700;color:var(--green);font-family:monospace;font-size:13px}
+.td-name{color:var(--ink)}
+.roe{font-weight:600;color:var(--green-d)}
+
+.footer{margin-top:32px;padding:18px 0;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+
+@media(max-width:1000px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.kpi-strip,.g2,.g3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <img src="https://ocbs.com.vn/images/logo-white.png" alt="OCBS" onerror="this.style.display='none'">
+  <h1>Dashboard Ngành Cao Su</h1>
+  <span class="upd">OCBS Research · Cập nhật: 2026-05-24</span>
+</div>
+
+<div class="wrap">
+
+  <!-- KPI cards -->
+  <div class="kpi-strip" style="margin-top:20px">
+    <div class="kpi">
+      <div class="kpi-lbl">Giá Cao Su TSR20</div>
+      <div class="kpi-val">220.9 <span class="kpi-unit">USD/100kg</span></div>
+      <div class="kpi-sub" style="color:#c0492f">▼ 0.41% ngày trước</div>
+      <div class="kpi-dt">2026-05-22</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">XK Cao Su Thô VN</div>
+      <div class="kpi-val">137 <span class="kpi-unit">triệu USD</span></div>
+      <div class="kpi-sub" style="color:#c0492f">▼ 1.6% YoY · 1998 USD/tấn</div>
+      <div class="kpi-dt">2026-04</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">XK Sản Phẩm Cao Su VN</div>
+      <div class="kpi-val">144 <span class="kpi-unit">triệu USD</span></div>
+      <div class="kpi-sub" style="color:#008C44">▲ 10.4% YoY</div>
+      <div class="kpi-dt">2026-04</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">NK Cao Su Trung Quốc</div>
+      <div class="kpi-val">1,458 <span class="kpi-unit">triệu USD</span></div>
+      <div class="kpi-sub" style="color:#c0492f">▼ 3.4% YoY</div>
+      <div class="kpi-dt">2026-03</div>
+    </div>
+  </div>
+
+  <!-- Giá TSR20 -->
+  <div class="sec-title">Giá Bán Cao Su Tham Chiếu (TSR20)</div>
+  <div class="card" style="margin-bottom:18px">
+    <h3>Giá bán cao su tham chiếu của Tập đoàn Cao su Việt Nam</h3>
+    <div class="note">USD/100kg · Hợp đồng giao ngay</div>
+    <div class="filter-row">
+      <button class="fbtn" onclick="filterTSR(90)">6 tháng</button>
+      <button class="fbtn active" onclick="filterTSR(255)">1 năm</button>
+      <button class="fbtn" onclick="filterTSR(0)">Tất cả</button>
+    </div>
+    <div class="chart-box" style="height:200px">
+      <canvas id="cTSR"></canvas>
+    </div>
+  </div>
+
+  <!-- XK VN -->
+  <div class="sec-title">Xuất Khẩu Việt Nam</div>
+  <div class="g2">
+    <div class="card">
+      <h3>Kim Ngạch XK Cao Su của Việt Nam</h3>
+      <div class="note">Triệu USD · So sánh theo tháng 3 năm gần nhất</div>
+      <div class="chart-box" style="height:240px"><canvas id="cXK"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Kim Ngạch XK Sản Phẩm từ Cao Su của Việt Nam</h3>
+      <div class="note">Triệu USD · So sánh theo tháng 3 năm gần nhất</div>
+      <div class="chart-box" style="height:240px"><canvas id="cSP"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TQ -->
+  <div class="sec-title">Trung Quốc — Cầu Nguyên Liệu & Cung Thành Phẩm</div>
+  <div class="g2">
+    <div class="card">
+      <h3>Kim Ngạch NK Cao Su của Trung Quốc</h3>
+      <div class="note">Triệu USD · Chỉ báo nhu cầu nguyên liệu toàn cầu</div>
+      <div class="chart-box" style="height:240px"><canvas id="cNK"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Kim Ngạch XK Lốp Xe của Trung Quốc</h3>
+      <div class="note">Triệu USD · Chỉ báo năng lực hấp thụ cao su hạ nguồn</div>
+      <div class="chart-box" style="height:240px"><canvas id="cLX"></canvas></div>
+    </div>
+  </div>
+
+  <!-- DN so sánh -->
+  <div class="sec-title">So Sánh Doanh Nghiệp Ngành Cao Su</div>
+  <div class="g2" style="margin-bottom:18px">
+    <div class="card">
+      <h3>ROE & Biên Lợi Nhuận</h3>
+      <div class="note">TTM · % · GVR / PHR / DPR / BRR / TRC / HRC</div>
+      <div class="chart-box" style="height:220px"><canvas id="cCo"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Cơ Cấu Tiêu Thụ Cao Su Toàn Cầu</h3>
+      <div class="note">% theo ứng dụng — 65% dùng sản xuất lốp xe</div>
+      <div class="chart-box" style="height:220px"><canvas id="cApp"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card" style="margin-bottom:28px">
+    <h3 style="margin-bottom:14px">Bảng So Sánh Valuation &amp; Tài Chính — Quý Gần Nhất (TTM)</h3>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr>
+          <th>Mã CK</th><th>Tên DN</th>
+          <th class="r">Vốn hóa<br>(Tỷ VNĐ)</th>
+          <th class="r">P/E</th><th class="r">P/B</th><th class="r">EV/EBITDA</th>
+          <th class="r">ROE</th>
+          <th class="r">Doanh thu<br>(Tỷ)</th>
+          <th class="r">LNST<br>(Tỷ)</th>
+          <th class="r">Tiền mặt ròng<br>(Tỷ)</th>
+        </tr></thead>
+        <tbody>
+<tr>
+          <td class="td-tk">GVR</td>
+          <td class="td-name">TĐ Cao su Việt Nam</td>
+          <td class="td-r">126,800</td>
+          <td class="td-r">19.22</td>
+          <td class="td-r">2.15</td>
+          <td class="td-r">11.97</td>
+          <td class="td-r roe">11.82%</td>
+          <td class="td-r">32,535</td>
+          <td class="td-r">6,596</td>
+          <td class="td-r">23,231</td>
+        </tr>
+<tr>
+          <td class="td-tk">PHR</td>
+          <td class="td-name">Cao su Phước Hòa </td>
+          <td class="td-r">8,387</td>
+          <td class="td-r">12.03</td>
+          <td class="td-r">1.94</td>
+          <td class="td-r">13.50</td>
+          <td class="td-r roe">16.95%</td>
+          <td class="td-r">1,952</td>
+          <td class="td-r">697</td>
+          <td class="td-r">2,372</td>
+        </tr>
+<tr>
+          <td class="td-tk">BRR</td>
+          <td class="td-name">Cao su Bà Rịa</td>
+          <td class="td-r">2,475</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r roe">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+        </tr>
+<tr>
+          <td class="td-tk">DRC</td>
+          <td class="td-name">Cao Su Đà Nẵng</td>
+          <td class="td-r">2,471</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r roe">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+        </tr>
+<tr>
+          <td class="td-tk">DPR</td>
+          <td class="td-name">Cao su Đồng Phú</td>
+          <td class="td-r">3,467</td>
+          <td class="td-r">8.96</td>
+          <td class="td-r">1.30</td>
+          <td class="td-r">3.58</td>
+          <td class="td-r roe">13.53%</td>
+          <td class="td-r">1,520</td>
+          <td class="td-r">387</td>
+          <td class="td-r">2,272</td>
+        </tr>
+<tr>
+          <td class="td-tk">RTB</td>
+          <td class="td-name">Công ty cổ phần Cao su Tân Biên</td>
+          <td class="td-r">2,093</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r roe">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+        </tr>
+<tr>
+          <td class="td-tk">HRC</td>
+          <td class="td-name">Cao su Hòa Bình</td>
+          <td class="td-r">1,601</td>
+          <td class="td-r">38.40</td>
+          <td class="td-r">2.52</td>
+          <td class="td-r">62.59</td>
+          <td class="td-r roe">6.75%</td>
+          <td class="td-r">302</td>
+          <td class="td-r">42</td>
+          <td class="td-r">-81</td>
+        </tr>
+<tr>
+          <td class="td-tk">CSM</td>
+          <td class="td-name">Công nghiệp Cao su Miền Nam</td>
+          <td class="td-r">1,430</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r roe">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+        </tr>
+<tr>
+          <td class="td-tk">TNC</td>
+          <td class="td-name">Cao su Thống Nhất</td>
+          <td class="td-r">1,301</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r roe">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+        </tr>
+<tr>
+          <td class="td-tk">DRG</td>
+          <td class="td-name">Công ty Cổ phân cao su Đắk Lắk</td>
+          <td class="td-r">1,137</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r roe">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+          <td class="td-r">—</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px">
+      Nguồn: findicator.vn TTM · Doanh thu = Vốn hóa ÷ P/S · LNST = Vốn hóa ÷ P/E
+    </p>
+  </div>
+
+  <div class="footer">
+    <p><strong>Nguồn dữ liệu:</strong> findicator.vn (giá TSR20, XK/NK, DN) · OCBS Research</p>
+    <p style="margin-top:4px">Báo cáo chỉ nhằm mục đích tham khảo, không phải khuyến nghị đầu tư. Nhà đầu tư cần tự đánh giá rủi ro trước khi đưa ra quyết định.</p>
+  </div>
+</div><!-- /wrap -->
+
+<script>
+// ── Raw data ──────────────────────────────────────────────────────────────────
+const TSR_LABELS = ["08/05/25", "12/05/25", "13/05/25", "14/05/25", "15/05/25", "18/05/25", "19/05/25", "20/05/25", "21/05/25", "22/05/25", "25/05/25", "26/05/25", "27/05/25", "28/05/25", "29/05/25", "02/06/25", "03/06/25", "04/06/25", "05/06/25", "06/06/25", "08/06/25", "09/06/25", "10/06/25", "11/06/25", "12/06/25", "15/06/25", "16/06/25", "17/06/25", "18/06/25", "19/06/25", "22/06/25", "23/06/25", "24/06/25", "25/06/25", "26/06/25", "29/06/25", "07/07/25", "08/07/25", "09/07/25", "10/07/25", "13/07/25", "14/07/25", "15/07/25", "16/07/25", "17/07/25", "20/07/25", "21/07/25", "22/07/25", "23/07/25", "24/07/25", "27/07/25", "28/07/25", "29/07/25", "30/07/25", "07/08/25", "10/08/25", "11/08/25", "12/08/25", "13/08/25", "14/08/25", "17/08/25", "18/08/25", "19/08/25", "20/08/25", "21/08/25", "24/08/25", "25/08/25", "26/08/25", "27/08/25", "28/08/25", "07/09/25", "08/09/25", "09/09/25", "10/09/25", "11/09/25", "14/09/25", "15/09/25", "16/09/25", "17/09/25", "18/09/25", "21/09/25", "22/09/25", "23/09/25", "24/09/25", "25/09/25", "28/09/25", "29/09/25", "06/10/25", "07/10/25", "08/10/25", "09/10/25", "12/10/25", "13/10/25", "14/10/25", "15/10/25", "16/10/25", "20/10/25", "21/10/25", "22/10/25", "23/10/25", "26/10/25", "27/10/25", "28/10/25", "29/10/25", "30/10/25", "31/10/25", "03/11/25", "04/11/25", "05/11/25", "06/11/25", "07/11/25", "09/11/25", "10/11/25", "11/11/25", "12/11/25", "13/11/25", "14/11/25", "16/11/25", "17/11/25", "18/11/25", "19/11/25", "20/11/25", "21/11/25", "23/11/25", "24/11/25", "25/11/25", "26/11/25", "27/11/25", "28/11/25", "01/12/25", "02/12/25", "03/12/25", "04/12/25", "05/12/25", "07/12/25", "08/12/25", "09/12/25", "10/12/25", "11/12/25", "12/12/25", "14/12/25", "15/12/25", "16/12/25", "17/12/25", "18/12/25", "19/12/25", "21/12/25", "22/12/25", "23/12/25", "24/12/25", "25/12/25", "26/12/25", "28/12/25", "29/12/25", "30/12/25", "02/01/26", "05/01/26", "06/01/26", "07/01/26", "08/01/26", "09/01/26", "11/01/26", "12/01/26", "13/01/26", "14/01/26", "15/01/26", "16/01/26", "18/01/26", "19/01/26", "20/01/26", "21/01/26", "22/01/26", "23/01/26", "25/01/26", "26/01/26", "27/01/26", "28/01/26", "29/01/26", "30/01/26", "02/02/26", "03/02/26", "04/02/26", "05/02/26", "06/02/26", "09/02/26", "10/02/26", "11/02/26", "12/02/26", "13/02/26", "18/02/26", "19/02/26", "20/02/26", "23/02/26", "24/02/26", "25/02/26", "26/02/26", "27/02/26", "02/03/26", "03/03/26", "04/03/26", "05/03/26", "06/03/26", "09/03/26", "10/03/26", "11/03/26", "12/03/26", "13/03/26", "16/03/26", "17/03/26", "18/03/26", "19/03/26", "20/03/26", "23/03/26", "24/03/26", "25/03/26", "26/03/26", "27/03/26", "30/03/26", "31/03/26", "01/04/26", "02/04/26", "06/04/26", "07/04/26", "08/04/26", "09/04/26", "10/04/26", "13/04/26", "14/04/26", "15/04/26", "16/04/26", "17/04/26", "20/04/26", "21/04/26", "22/04/26", "23/04/26", "24/04/26", "27/04/26", "28/04/26", "29/04/26", "30/04/26", "04/05/26", "05/05/26", "06/05/26", "07/05/26", "08/05/26", "11/05/26", "12/05/26", "13/05/26", "14/05/26", "15/05/26", "18/05/26", "19/05/26", "20/05/26", "21/05/26", "22/05/26"];
+const TSR_VALS   = [171.3, 176.0, 177.2, 175.4, 172.4, 172.8, 172.5, 172.2, 171.4, 169.5, 169.2, 170.5, 166.6, 166.2, 162.0, 157.5, 158.7, 161.0, 160.0, 161.0, 161.5, 163.4, 163.5, 160.0, 161.7, 162.4, 163.0, 165.2, 163.8, 161.3, 161.1, 159.6, 159.5, 162.9, 161.6, 162.5, 162.6, 162.7, 166.3, 165.6, 165.2, 166.1, 167.3, 168.1, 168.8, 170.4, 171.3, 169.5, 173.6, 175.8, 170.3, 171.9, 168.9, 165.0, 168.6, 170.5, 170.9, 169.4, 168.2, 171.3, 170.3, 170.9, 169.8, 169.9, 169.9, 172.2, 172.9, 171.9, 173.4, 173.6, 177.8, 174.1, 174.3, 173.8, 173.1, 174.2, 174.7, 173.2, 170.6, 170.3, 171.9, 171.5, 173.4, 173.1, 173.7, 172.9, 170.0, 171.3, 169.9, 172.9, 172.4, 170.3, 170.4, 172.2, 171.3, 170.1, 172.3, 172.8, 173.7, 174.2, 174.4, 174.0, 176.3, 174.7, 170.5, 171.3, 171.0, 168.2, 168.2, 169.5, 169.1, 170.4, 170.1, 171.7, 173.0, 172.0, 172.0, 173.0, 172.6, 172.8, 171.4, 171.3, 171.3, 172.6, 172.0, 173.1, 177.0, 180.0, 172.7, 171.9, 172.4, 171.3, 170.4, 171.5, 171.2, 171.3, 172.4, 172.2, 173.7, 173.7, 174.6, 174.6, 176.0, 175.3, 175.0, 175.0, 176.3, 177.6, 179.8, 177.8, 183.1, 180.5, 183.2, 179.9, 179.8, 181.7, 182.6, 184.7, 185.6, 183.6, 183.6, 185.1, 183.5, 185.2, 182.6, 181.5, 181.5, 180.8, 179.9, 180.8, 181.6, 185.8, 185.8, 185.3, 187.4, 189.4, 191.3, 187.0, 189.0, 185.1, 186.9, 189.9, 188.1, 189.9, 191.5, 192.9, 192.5, 192.9, 192.9, 192.7, 194.4, 194.9, 199.5, 205.2, 204.5, 204.8, 200.7, 203.3, 198.7, 197.4, 194.2, 196.9, 198.2, 198.8, 198.1, 195.4, 196.1, 195.6, 192.2, 190.3, 189.3, 190.9, 193.6, 196.8, 197.8, 200.3, 200.6, 203.4, 196.3, 198.8, 201.5, 203.4, 205.0, 205.7, 203.0, 202.5, 202.6, 203.5, 203.4, 201.0, 205.3, 206.7, 209.1, 209.6, 211.8, 212.5, 216.2, 215.4, 216.3, 214.8, 217.2, 217.8, 219.6, 222.6, 223.3, 221.8, 231.6, 222.3, 221.3, 222.7, 223.6, 222.0, 220.8, 221.8, 220.9];
+const TSR_DATES  = ["2025-05-08", "2025-05-12", "2025-05-13", "2025-05-14", "2025-05-15", "2025-05-18", "2025-05-19", "2025-05-20", "2025-05-21", "2025-05-22", "2025-05-25", "2025-05-26", "2025-05-27", "2025-05-28", "2025-05-29", "2025-06-02", "2025-06-03", "2025-06-04", "2025-06-05", "2025-06-06", "2025-06-08", "2025-06-09", "2025-06-10", "2025-06-11", "2025-06-12", "2025-06-15", "2025-06-16", "2025-06-17", "2025-06-18", "2025-06-19", "2025-06-22", "2025-06-23", "2025-06-24", "2025-06-25", "2025-06-26", "2025-06-29", "2025-07-07", "2025-07-08", "2025-07-09", "2025-07-10", "2025-07-13", "2025-07-14", "2025-07-15", "2025-07-16", "2025-07-17", "2025-07-20", "2025-07-21", "2025-07-22", "2025-07-23", "2025-07-24", "2025-07-27", "2025-07-28", "2025-07-29", "2025-07-30", "2025-08-07", "2025-08-10", "2025-08-11", "2025-08-12", "2025-08-13", "2025-08-14", "2025-08-17", "2025-08-18", "2025-08-19", "2025-08-20", "2025-08-21", "2025-08-24", "2025-08-25", "2025-08-26", "2025-08-27", "2025-08-28", "2025-09-07", "2025-09-08", "2025-09-09", "2025-09-10", "2025-09-11", "2025-09-14", "2025-09-15", "2025-09-16", "2025-09-17", "2025-09-18", "2025-09-21", "2025-09-22", "2025-09-23", "2025-09-24", "2025-09-25", "2025-09-28", "2025-09-29", "2025-10-06", "2025-10-07", "2025-10-08", "2025-10-09", "2025-10-12", "2025-10-13", "2025-10-14", "2025-10-15", "2025-10-16", "2025-10-20", "2025-10-21", "2025-10-22", "2025-10-23", "2025-10-26", "2025-10-27", "2025-10-28", "2025-10-29", "2025-10-30", "2025-10-31", "2025-11-03", "2025-11-04", "2025-11-05", "2025-11-06", "2025-11-07", "2025-11-09", "2025-11-10", "2025-11-11", "2025-11-12", "2025-11-13", "2025-11-14", "2025-11-16", "2025-11-17", "2025-11-18", "2025-11-19", "2025-11-20", "2025-11-21", "2025-11-23", "2025-11-24", "2025-11-25", "2025-11-26", "2025-11-27", "2025-11-28", "2025-12-01", "2025-12-02", "2025-12-03", "2025-12-04", "2025-12-05", "2025-12-07", "2025-12-08", "2025-12-09", "2025-12-10", "2025-12-11", "2025-12-12", "2025-12-14", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-21", "2025-12-22", "2025-12-23", "2025-12-24", "2025-12-25", "2025-12-26", "2025-12-28", "2025-12-29", "2025-12-30", "2026-01-02", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-18", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-25", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-13", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22"];
+
+const YOY_VN_EXPORT  = {"months": ["Tháng 01", "Tháng 02", "Tháng 03", "Tháng 04", "Tháng 05", "Tháng 06", "Tháng 07", "Tháng 08", "Tháng 09", "Tháng 10", "Tháng 11", "Tháng 12"], "years": ["2024", "2025", "2026"], "datasets": {"2024": {"values": [296.71, 129.95, 180.37, 117.57, 134.65, 246.96, 307.92, 344.97, 335.56, 429.01, 441.26, 452.72], "color": "#7b8cde"}, "2025": {"values": [298.68, 225.71, 215.18, 139.46, 174.92, 239.92, 334.6, 359.31, 301.84, 304.66, 322.56, 404.9], "color": "#5a6fd6"}, "2026": {"values": [362.17, 141.34, 210.65, 137.18, null, null, null, null, null, null, null, null], "color": "#e05c7a"}}};
+const YOY_VN_PRODUCT = {"months": ["Tháng 01", "Tháng 02", "Tháng 03", "Tháng 04", "Tháng 05", "Tháng 06", "Tháng 07", "Tháng 08", "Tháng 09", "Tháng 10", "Tháng 11", "Tháng 12"], "years": ["2024", "2025", "2026"], "datasets": {"2024": {"values": [105.32, 68.29, 110.53, 102.46, 100.39, 96.44, 98.93, 107.71, 93.59, 110.21, 110.97, 117.57], "color": "#7b8cde"}, "2025": {"values": [106.19, 99.8, 121.02, 130.06, 124.09, 126.68, 120.51, 120.67, 111.02, 113.3, 109.77, 131.47], "color": "#5a6fd6"}, "2026": {"values": [134.71, 98.64, 129.79, 143.6, null, null, null, null, null, null, null, null], "color": "#e05c7a"}}};
+const YOY_CN_IMPORT  = {"months": ["Tháng 01", "Tháng 02", "Tháng 03", "Tháng 04", "Tháng 05", "Tháng 06", "Tháng 07", "Tháng 08", "Tháng 09", "Tháng 10", "Tháng 11", "Tháng 12"], "years": ["2024", "2025", "2026"], "datasets": {"2024": {"values": [1056.0, 718.0, 1047.0, 884.0, 833.0, 816.0, 1088.0, 1102.0, 1112.0, 1237.0, 1390.0, 1581.0], "color": "#7b8cde"}, "2025": {"values": [1451.0, 1326.0, 1510.0, 1354.0, 1166.0, 1110.0, 1136.0, 1182.0, 1320.0, 1191.0, 1405.0, 1684.0], "color": "#5a6fd6"}, "2026": {"values": [1402.0, 1083.0, 1458.0, null, null, null, null, null, null, null, null, null], "color": "#e05c7a"}}};
+const YOY_CN_TIRE    = {"months": ["Tháng 01", "Tháng 02", "Tháng 03", "Tháng 04", "Tháng 05", "Tháng 06", "Tháng 07", "Tháng 08", "Tháng 09", "Tháng 10", "Tháng 11", "Tháng 12"], "years": ["2024", "2025", "2026"], "datasets": {"2024": {"values": [1814.17, 1373.62, 1874.56, 1791.74, 1837.46, 2095.9, 1975.16, 2039.07, 1801.76, 1881.47, 1828.12, 1943.19], "color": "#7b8cde"}, "2025": {"values": [1859.68, 1435.09, 2033.86, 1858.86, 2021.3, 1918.96, 2117.16, 2019.89, 1823.25, 1696.77, 1819.73, 1890.53], "color": "#5a6fd6"}, "2026": {"values": [1868.0, 1696.6, 1872.66, null, null, null, null, null, null, null, null, null], "color": "#e05c7a"}}};
+
+const CO_NAMES = ["GVR", "PHR", "DPR", "HRC", "TRC"];
+const CO_ROE   = [11.8, 16.9, 13.5, 6.8, 14.1];
+const CO_GM    = [26.4, 25.0, 38.6, 15.5, 27.1];
+const CO_NM    = [28.4, 60.9, 31.2, 7.4, 36.2];
+
+const APP_LABELS = ["Lốp xe", "Ống dẫn & Dây đai dẫn động", "Nội thất ô tô", "Giày dép", "Găng tay y tế", "Chỉ sợi", "Foam", "Chất kết dính", "Khác"];
+const APP_VALS   = [65.0, 8.0, 7.0, 6.0, 5.0, 2.0, 1.0, 1.0, 5.0];
+
+// ── Defaults ──────────────────────────────────────────────────────────────────
+Chart.defaults.font = {family:"'Inter',sans-serif", size:11};
+Chart.defaults.color = '#5f6b64';
+Chart.defaults.plugins.legend.labels.boxWidth = 11;
+Chart.defaults.plugins.legend.labels.padding  = 12;
+
+const G = '#008C44', GOLD='#E4A025', BLUE='#2f6fb0', RED='#c0492f',
+      TEAL='#2a9d8f', ORANGE='#d4660c';
+
+// ── TSR20 line ────────────────────────────────────────────────────────────────
+let tsrChart;
+function buildTSR(labels, vals) {
+  if (tsrChart) tsrChart.destroy();
+  tsrChart = new Chart(document.getElementById('cTSR'), {
+    type:'line',
+    data:{ labels, datasets:[{
+      label:'Cao su TSR20 (USD/100kg)',
+      data: vals, borderColor:G, borderWidth:2,
+      pointRadius:0, tension:.3, fill:true,
+      backgroundColor:'rgba(0,140,68,0.07)'
+    }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{maxTicksLimit:12, maxRotation:0}, grid:{display:false}},
+        y:{grid:{color:'#f0ede5'}, ticks:{callback:v=>v+''}}
+      }
+    }
+  });
+}
+
+function filterTSR(n) {
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const cut = n > 0 ? TSR_LABELS.length - n : 0;
+  buildTSR(TSR_LABELS.slice(cut), TSR_VALS.slice(cut));
+}
+buildTSR(TSR_LABELS, TSR_VALS);
+
+// ── Helper: YoY grouped bar ───────────────────────────────────────────────────
+function makeYoYChart(canvasId, yoyData, unit) {
+  const years = yoyData.years;
+  const datasets = years.map(yr => ({
+    label: yr,
+    data: yoyData.datasets[yr].values,
+    backgroundColor: yoyData.datasets[yr].color + 'cc',
+    borderColor:     yoyData.datasets[yr].color,
+    borderWidth: 1
+  }));
+  new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{ labels: yoyData.months, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom' } },
+      scales:{
+        x:{ ticks:{maxRotation:0}, grid:{display:false} },
+        y:{ grid:{color:'#f0ede5'}, ticks:{callback: v => v==null?'':v} }
+      }
+    }
+  });
+}
+
+makeYoYChart('cXK', YOY_VN_EXPORT,  'Triệu USD');
+makeYoYChart('cSP', YOY_VN_PRODUCT, 'Triệu USD');
+makeYoYChart('cNK', YOY_CN_IMPORT,  'Triệu USD');
+makeYoYChart('cLX', YOY_CN_TIRE,    'Triệu USD');
+
+// ── Company bar ───────────────────────────────────────────────────────────────
+new Chart(document.getElementById('cCo'), {
+  type:'bar',
+  data:{
+    labels: CO_NAMES,
+    datasets:[
+      {label:'ROE (%)',      data:CO_ROE, backgroundColor:G+'cc'},
+      {label:'Biên gộp (%)' ,data:CO_GM,  backgroundColor:BLUE+'cc'},
+      {label:'Biên ròng (%)',data:CO_NM,  backgroundColor:GOLD+'cc'}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'top'}},
+    scales:{
+      x:{grid:{display:false}},
+      y:{grid:{color:'#f0ede5'}, ticks:{callback:v=>v+'%'}}
+    }
+  }
+});
+
+// ── Application donut ─────────────────────────────────────────────────────────
+new Chart(document.getElementById('cApp'), {
+  type:'doughnut',
+  data:{
+    labels: APP_LABELS,
+    datasets:[{
+      data: APP_VALS,
+      backgroundColor:[G,BLUE,GOLD,TEAL,RED,ORANGE,'#7a5ea8','#8b5e3c','#607d8b'],
+      borderWidth:2, borderColor:'#fff'
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{position:'right', labels:{font:{size:11}, padding:7}},
+      tooltip:{callbacks:{label: ctx => ` ${ctx.label}: ${ctx.parsed}%`}}
+    }
+  }
+});
+</script>
+</body>
+</html>
