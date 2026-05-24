@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Ngành Chứng khoán · OCBS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#FAFAF7;--ink:#1a2420;--muted:#5f6b64;--line:#e7e6df;
+  --green:#008C44;--green-d:#05623a;--gold:#E4A025;--card:#fff;
+  --blue:#2f6fb0;--red:#c0492f;--teal:#2a9d8f;--orange:#d4660c;--purple:#7a5ea8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5}
+
+/* ── Topbar ───────────────────────────────────────────────────────── */
+.topbar{background:var(--green-d);color:#fff;padding:14px 32px;display:flex;align-items:center;gap:14px}
+.topbar img{height:30px;width:auto}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.3px}
+.topbar .upd{font-size:11px;opacity:.7;margin-left:auto}
+
+/* ── Layout ───────────────────────────────────────────────────────── */
+.wrap{max-width:1400px;margin:0 auto;padding:24px 20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px}
+
+/* ── Cards ────────────────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+.card h3{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.card .note{font-size:11px;color:var(--muted);margin-bottom:14px}
+.chart-box{position:relative}
+
+/* ── KPI strip ────────────────────────────────────────────────────── */
+.kpi-strip{display:grid;gap:14px;margin-bottom:28px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.kpi-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:6px}
+.kpi-val{font-size:24px;font-weight:800;line-height:1.1}
+.kpi-unit{font-size:13px;font-weight:500}
+.kpi-sub{font-size:12px;margin-top:4px}
+.kpi-dt{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ── Section title ────────────────────────────────────────────────── */
+.sec-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+           color:var(--muted);margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+
+/* ── Filter buttons ───────────────────────────────────────────────── */
+.filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fbtn{background:none;border:1px solid var(--line);border-radius:5px;padding:3px 10px;
+      font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+.fbtn.active,.fbtn:hover{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* ── Company table ────────────────────────────────────────────────── */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{background:#f4f4f0;font-size:10.5px;font-weight:700;text-transform:uppercase;
+        letter-spacing:.6px;color:var(--muted);padding:8px 10px;border-bottom:2px solid var(--line)}
+.tbl th.r,.tbl td.td-r{text-align:right}
+.tbl td{padding:9px 10px;border-bottom:1px solid #f0ede5}
+.tbl tbody tr:hover{background:#f9f8f3}
+.td-tk{font-weight:700;color:var(--green);font-family:monospace;font-size:13px}
+.td-name{color:var(--ink)}
+.td-pos{font-weight:600;color:var(--green-d)}
+.td-neg{font-weight:600;color:var(--red)}
+
+/* ── Nowcast badge ────────────────────────────────────────────────── */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-up{background:#e3f3e9;color:#0a7a3e}
+.badge-dn{background:#fbe6e0;color:#b23a1f}
+.badge-flat{background:#eef0ee;color:#5f6b64}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.footer{margin-top:32px;padding:18px 0;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media(max-width:1000px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.kpi-strip,.g2,.g3{grid-template-columns:1fr}}
+
+
+</style>
+</head>
+<body>
+<div class="topbar">
+  <img src="https://ocbs.com.vn/images/logo-white.png" alt="OCBS" onerror="this.style.display='none'">
+  <h1>Dashboard Ngành Chứng khoán</h1>
+  <span class="upd">OCBS Research · Cập nhật: 2026-05-24</span>
+</div>
+<div class="wrap">
+
+  <div class="kpi-strip" style="grid-template-columns:repeat(6,1fr)"><div class="kpi"><div class="kpi-lbl">Tổng vốn hóa 8 CTCK</div><div class="kpi-val">176,117 <span class="kpi-unit">Tỷ VNĐ</span></div><div class="kpi-sub">8 CTCK · TTM</div><div class="kpi-dt">2026-05-24</div></div><div class="kpi"><div class="kpi-lbl">GTGD BQ/phiên (4 tuần)</div><div class="kpi-val">21,703 <span class="kpi-unit">Tỷ/ngày</span></div><div class="kpi-sub">3 sàn HOSE/HNX/UPCOM</div></div><div class="kpi"><div class="kpi-lbl">Dư nợ margin ngành</div><div class="kpi-val">127,853 <span class="kpi-unit">Tỷ VNĐ</span></div><div class="kpi-sub">Utilization 56.09% · trần 200%</div><div class="kpi-dt">2026-01-01</div></div><div class="kpi"><div class="kpi-lbl">P/E trung vị</div><div class="kpi-val">17.1 <span class="kpi-unit">lần</span></div><div class="kpi-sub">TTM · so chéo</div></div><div class="kpi"><div class="kpi-lbl">P/B trung vị</div><div class="kpi-val">1.64 <span class="kpi-unit">lần</span></div><div class="kpi-sub">TTM · so chéo</div></div><div class="kpi"><div class="kpi-lbl">ROE trung vị</div><div class="kpi-val">9.9%</div><div class="kpi-sub">TTM · 4 quý</div></div></div>
+
+  <div class="sec-title">Trụ 1 — Sức Cầu Thị Trường (động cơ doanh thu môi giới & margin)</div>
+
+
+  <div class="card" style="margin-bottom:18px">
+    <h3>Giá trị giao dịch bình quân/phiên — 5 năm (weekly, 3 sàn)</h3>
+    <p class="note">Trend cầu giao dịch toàn thị trường — input số 1 cho DT môi giới &amp; margin.
+       Đỉnh 2021-22 ~ 30k tỷ/ngày · vùng đáy 2023 ~ 12k · phục hồi 2024-26.</p>
+    <div class="chart-box" style="height:280px"><canvas id="gtgd-chart"></canvas></div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>Số tài khoản mở mới/tháng — 5 năm</h3>
+      <p class="note">Proxy tăng trưởng base khách lẻ. Bùng nổ Q2-2022 (covid retail) ·
+         hạ nhiệt 2023 · ổn định lại 2024-26.</p>
+      <div class="chart-box" style="height:260px"><canvas id="acct-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Dư nợ margin &amp; Utilization toàn ngành (8 CTCK, theo quý)</h3>
+      <p class="note">Cột xanh = tổng dư nợ margin 8 CTCK · đường đỏ = utilization
+         (Dư nợ ÷ 2×VCSH, trần luật ~200%). Dư địa còn nhiều nếu utilization &lt; 70%.</p>
+      <div class="chart-box" style="height:260px"><canvas id="margin-sector-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sec-title">Trụ 2 — Cơ Cấu Doanh Thu &amp; Mô Hình Kinh Doanh</div>
+
+
+  <div class="card" style="margin-bottom:18px">
+    <h3>Cơ cấu LN gộp 5 mảng — 8 CTCK (quý gần nhất)</h3>
+    <p class="note">Phân biệt CTCK "ăn phí" (môi giới + margin) vs "tự doanh nặng" (FVTPL).
+       <strong>Nhãn 5 mảng là ƯỚC theo thứ tự độ lớn quan sát ở SSI Q1/26</strong> — chưa có legend
+       chính thức từ API; ưu tiên đọc tỷ trọng tương đối hơn là tin tuyệt đối nhãn.</p>
+    <div class="chart-box" style="height:340px"><canvas id="mix-chart"></canvas></div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <h3>Thị phần môi giới HOSE — 12 quý (8 CTCK)</h3>
+      <p class="note">Trend giành/mất thị phần. SSI thường &gt;10% · VPS (ngoài 8 mã) dẫn đầu ~24%.</p>
+      <div class="chart-box" style="height:340px"><canvas id="bsq-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Thị phần MG HOSE hiện tại — Top 15 toàn thị trường</h3>
+      <p class="note">Bức tranh cạnh tranh đầy đủ: VPS · TCBS · SSI · MBS · VND · HSC dẫn dắt.
+         Cột màu = 1 trong 8 CTCK theo dõi; cột xám = đối thủ ngoài rổ.</p>
+      <div class="chart-box" style="height:340px"><canvas id="share-now-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sec-title">Trụ 4 — Sức Mạnh Vốn &amp; Đòn Bẩy Margin</div>
+
+
+  <div class="g2">
+    <div class="card">
+      <h3>Vốn chủ sở hữu per CTCK (Tỷ VNĐ, quý gần nhất)</h3>
+      <p class="note">VCSH là "nhiên liệu" cho margin &amp; tự doanh. CTCK tăng vốn nhiều
+         = dư địa mở rộng nhưng có thể pha loãng EPS/BVPS ngắn hạn.</p>
+      <div class="chart-box" style="height:280px"><canvas id="vcsh-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Margin Utilization per CTCK — Dư nợ ÷ 2×VCSH</h3>
+      <p class="note">Trần luật 200% × VCSH ↔ utilization 100%. Cột đỏ &gt;85% = cạn dư địa,
+         cần tăng vốn để mở rộng margin. Xanh &lt;70% = còn dư địa rộng.</p>
+      <div class="chart-box" style="height:280px"><canvas id="util-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:28px">
+      <h3 style="margin-bottom:8px">Bảng Cấu Trúc Vốn &amp; Tài Sản — Quý gần nhất</h3>
+      <p class="note">VCSH = nguồn vốn cho margin &amp; tự doanh; Utilization = Dư nợ margin / (2×VCSH),
+         trần luật định ~200%. FVTPL/TS = tỷ trọng tự doanh (mark-to-market) trong tổng tài sản —
+         tỷ trọng cao = rủi ro biến động giá tài sản cao hơn.</p>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr>
+            <th>Mã CK</th>
+            <th class="r">VCSH<br>(Tỷ VNĐ)</th>
+            <th class="r">YoY<br>VCSH</th>
+            <th class="r">Dư nợ margin<br>(Tỷ VNĐ)</th>
+            <th class="r">Utilization<br>(/2×VCSH)</th>
+            <th class="r">FVTPL<br>(Tỷ VNĐ)</th>
+            <th class="r">FVTPL/TS</th>
+            <th class="r">Tổng TS<br>(Tỷ VNĐ)</th>
+          </tr></thead>
+          <tbody><tr>
+          <td class="td-tk">SSI</td>
+          <td class="td-r">39,668</td>
+          <td class="td-r"><span class="td-pos">+43.2%</span></td>
+          <td class="td-r">36,928</td>
+          <td class="td-r td-pos">46.5%</td>
+          <td class="td-r">42,429</td>
+          <td class="td-r">45.6%</td>
+          <td class="td-r">93,114</td>
+        </tr><tr>
+          <td class="td-tk">VND</td>
+          <td class="td-r">21,448</td>
+          <td class="td-r"><span class="td-pos">+6.7%</span></td>
+          <td class="td-r">12,683</td>
+          <td class="td-r td-pos">29.6%</td>
+          <td class="td-r">18,652</td>
+          <td class="td-r">38.9%</td>
+          <td class="td-r">47,965</td>
+        </tr><tr>
+          <td class="td-tk">VCI</td>
+          <td class="td-r">17,319</td>
+          <td class="td-r"><span class="td-pos">+37.7%</span></td>
+          <td class="td-r">16,613</td>
+          <td class="td-r td-pos">48.0%</td>
+          <td class="td-r">2,551</td>
+          <td class="td-r">6.9%</td>
+          <td class="td-r">37,097</td>
+        </tr><tr>
+          <td class="td-tk">HCM</td>
+          <td class="td-r">14,402</td>
+          <td class="td-r"><span class="td-pos">+39.7%</span></td>
+          <td class="td-r">28,140</td>
+          <td class="td-r td-neg">97.7%</td>
+          <td class="td-r">10,109</td>
+          <td class="td-r">25.0%</td>
+          <td class="td-r">40,467</td>
+        </tr><tr>
+          <td class="td-tk">MBS</td>
+          <td class="td-r">8,372</td>
+          <td class="td-r"><span class="td-pos">+16.6%</span></td>
+          <td class="td-r">15,520</td>
+          <td class="td-r td-neg">92.7%</td>
+          <td class="td-r">3,116</td>
+          <td class="td-r">10.2%</td>
+          <td class="td-r">30,659</td>
+        </tr><tr>
+          <td class="td-tk">BSI</td>
+          <td class="td-r">5,617</td>
+          <td class="td-r"><span class="td-pos">+9.3%</span></td>
+          <td class="td-r">9,165</td>
+          <td class="td-r ">81.6%</td>
+          <td class="td-r">6,381</td>
+          <td class="td-r">35.1%</td>
+          <td class="td-r">18,163</td>
+        </tr><tr>
+          <td class="td-tk">FTS</td>
+          <td class="td-r">4,530</td>
+          <td class="td-r"><span class="td-pos">+6.1%</span></td>
+          <td class="td-r">6,243</td>
+          <td class="td-r td-pos">68.9%</td>
+          <td class="td-r">5,914</td>
+          <td class="td-r">45.3%</td>
+          <td class="td-r">13,060</td>
+        </tr><tr>
+          <td class="td-tk">AGR</td>
+          <td class="td-r">2,621</td>
+          <td class="td-r"><span class="td-pos">+6.5%</span></td>
+          <td class="td-r">2,558</td>
+          <td class="td-r td-pos">48.8%</td>
+          <td class="td-r">474</td>
+          <td class="td-r">9.1%</td>
+          <td class="td-r">5,198</td>
+        </tr></tbody>
+        </table>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:10px">
+        Nguồn: findicator.vn corp_fin_balancesheet_quarter (account 209/207/312/201) · 2026-05-24.
+      </p>
+    </div>
+
+  <div class="sec-title">Định Giá So Chéo — Lịch Sử 7 Năm</div>
+
+
+  <div class="card" style="margin-bottom:18px">
+    <h3>P/E TTM theo năm</h3>
+    <p class="note">Mỗi điểm = TTM tại Q1 mỗi năm. Đường thấp = định giá rẻ hơn so với LNST.</p>
+    <div class="chart-box" style="height:360px"><canvas id="pe-chart"></canvas></div>
+  </div>
+
+  <div class="card" style="margin-bottom:18px">
+    <h3>P/B TTM theo năm</h3>
+    <p class="note">Đặc biệt quan trọng với CTCK vì BVPS phản ánh vốn dùng cho margin
+       &amp; tự doanh. Đường thấp = thị trường định giá vốn chủ rẻ.</p>
+    <div class="chart-box" style="height:360px"><canvas id="pb-chart"></canvas></div>
+  </div>
+
+  <div class="card" style="margin-bottom:18px">
+    <h3>Scatter P/B (Y) vs ROE (X) — TTM mới nhất</h3>
+    <p class="note">Góc trên-trái = đắt (P/B cao, ROE thấp). Góc dưới-phải = rẻ &amp; hiệu quả.
+       CTCK lệch xa đường công bằng là cơ hội re-rating.</p>
+    <div class="chart-box" style="height:420px"><canvas id="scatter-chart"></canvas></div>
+  </div>
+
+  <div class="card" style="margin-bottom:28px">
+      <h3 style="margin-bottom:14px">Bảng So Sánh Định Giá &amp; Hiệu Quả — TTM</h3>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr>
+            <th>Mã CK</th><th>Tên CTCK</th>
+            <th class="r">Vốn hóa<br>(Tỷ VNĐ)</th>
+            <th class="r">P/E</th><th class="r">P/B</th>
+            <th class="r">ROE</th>
+            <th class="r">EPS<br>(Đồng)</th>
+            <th class="r">BVPS<br>(Đồng)</th>
+          </tr></thead>
+          <tbody><tr>
+          <td class="td-tk">SSI</td>
+          <td class="td-name">CTCP Chứng khoán SSI</td>
+          <td class="td-r">67,189</td>
+          <td class="td-r">14.8</td>
+          <td class="td-r">1.70</td>
+          <td class="td-r td-pos">14.3%</td>
+          <td class="td-r">1,821</td>
+          <td class="td-r">15,859</td>
+        </tr><tr>
+          <td class="td-tk">HCM</td>
+          <td class="td-name">CTCP Chứng khoán TP HCM (HSC)</td>
+          <td class="td-r">24,534</td>
+          <td class="td-r">19.7</td>
+          <td class="td-r">1.70</td>
+          <td class="td-r td-pos">10.3%</td>
+          <td class="td-r">1,150</td>
+          <td class="td-r">13,325</td>
+        </tr><tr>
+          <td class="td-tk">VND</td>
+          <td class="td-name">CTCP Chứng khoán VNDIRECT</td>
+          <td class="td-r">24,052</td>
+          <td class="td-r">11.0</td>
+          <td class="td-r">1.12</td>
+          <td class="td-r td-pos">10.6%</td>
+          <td class="td-r">1,435</td>
+          <td class="td-r">14,089</td>
+        </tr><tr>
+          <td class="td-tk">VCI</td>
+          <td class="td-name">CTCP Chứng khoán Vietcap</td>
+          <td class="td-r">22,698</td>
+          <td class="td-r">16.4</td>
+          <td class="td-r">1.31</td>
+          <td class="td-r td-pos">9.5%</td>
+          <td class="td-r">1,633</td>
+          <td class="td-r">20,373</td>
+        </tr><tr>
+          <td class="td-tk">MBS</td>
+          <td class="td-name">CTCP Chứng khoán MB</td>
+          <td class="td-r">16,082</td>
+          <td class="td-r">13.9</td>
+          <td class="td-r">1.92</td>
+          <td class="td-r td-pos">15.2%</td>
+          <td class="td-r">1,729</td>
+          <td class="td-r">12,546</td>
+        </tr><tr>
+          <td class="td-tk">FTS</td>
+          <td class="td-name">CTCP Chứng khoán FPT</td>
+          <td class="td-r">9,286</td>
+          <td class="td-r">23.0</td>
+          <td class="td-r">2.05</td>
+          <td class="td-r td-pos">9.3%</td>
+          <td class="td-r">1,165</td>
+          <td class="td-r">13,072</td>
+        </tr><tr>
+          <td class="td-tk">BSI</td>
+          <td class="td-name">CTCP Chứng khoán BIDV</td>
+          <td class="td-r">8,919</td>
+          <td class="td-r">17.8</td>
+          <td class="td-r">1.59</td>
+          <td class="td-r td-pos">9.3%</td>
+          <td class="td-r">2,043</td>
+          <td class="td-r">22,891</td>
+        </tr><tr>
+          <td class="td-tk">AGR</td>
+          <td class="td-name">CTCP Chứng khoán Agribank</td>
+          <td class="td-r">3,356</td>
+          <td class="td-r">22.0</td>
+          <td class="td-r">1.28</td>
+          <td class="td-r td-pos">6.0%</td>
+          <td class="td-r">670</td>
+          <td class="td-r">11,479</td>
+        </tr></tbody>
+        </table>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:10px">
+        Nguồn: findicator.vn TTM (corpType=3 — Chứng khoán) · 2026-05-24.
+        Sắp theo vốn hóa giảm dần.
+      </p>
+    </div>
+
+<div class="footer">
+  <p><strong>Nguồn dữ liệu:</strong> findicator.vn (stock/* · enterprise/v2/finance-ticket-data · TRAILING corpType=3) · OCBS Research · Dashboard ngành Chứng khoán v2.0</p>
+  <p style="margin-top:4px">Báo cáo chỉ nhằm mục đích tham khảo, không phải khuyến nghị đầu tư.
+  Nhà đầu tư cần tự đánh giá rủi ro trước khi đưa ra quyết định.</p>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+<script>
+
+    const D = {"gtgd_labels": ["2021-05-03", "2021-05-10", "2021-05-17", "2021-05-24", "2021-05-31", "2021-06-07", "2021-06-14", "2021-06-21", "2021-06-28", "2021-07-05", "2021-07-12", "2021-07-19", "2021-07-26", "2021-08-02", "2021-08-09", "2021-08-16", "2021-08-23", "2021-08-30", "2021-09-06", "2021-09-13", "2021-09-20", "2021-09-27", "2021-10-04", "2021-10-11", "2021-10-18", "2021-10-25", "2021-11-01", "2021-11-08", "2021-11-15", "2021-11-22", "2021-11-29", "2021-12-06", "2021-12-13", "2021-12-20", "2021-12-27", "2022-01-03", "2022-01-10", "2022-01-17", "2022-01-24", "2022-02-07", "2022-02-14", "2022-02-21", "2022-02-28", "2022-03-07", "2022-03-14", "2022-03-21", "2022-03-28", "2022-04-04", "2022-04-11", "2022-04-18", "2022-04-25", "2022-05-02", "2022-05-09", "2022-05-16", "2022-05-23", "2022-05-30", "2022-06-06", "2022-06-13", "2022-06-20", "2022-06-27", "2022-07-04", "2022-07-11", "2022-07-18", "2022-07-25", "2022-08-01", "2022-08-08", "2022-08-15", "2022-08-22", "2022-08-29", "2022-09-05", "2022-09-12", "2022-09-19", "2022-09-26", "2022-10-03", "2022-10-10", "2022-10-17", "2022-10-24", "2022-10-31", "2022-11-07", "2022-11-14", "2022-11-21", "2022-11-28", "2022-12-05", "2022-12-12", "2022-12-19", "2022-12-26", "2023-01-02", "2023-01-09", "2023-01-16", "2023-01-23", "2023-01-30", "2023-02-06", "2023-02-13", "2023-02-20", "2023-02-27", "2023-03-06", "2023-03-13", "2023-03-20", "2023-03-27", "2023-04-03", "2023-04-10", "2023-04-17", "2023-04-24", "2023-05-01", "2023-05-08", "2023-05-15", "2023-05-22", "2023-05-29", "2023-06-05", "2023-06-12", "2023-06-19", "2023-06-26", "2023-07-03", "2023-07-10", "2023-07-17", "2023-07-24", "2023-07-31", "2023-08-07", "2023-08-14", "2023-08-21", "2023-08-28", "2023-09-04", "2023-09-11", "2023-09-18", "2023-09-25", "2023-10-02", "2023-10-09", "2023-10-16", "2023-10-23", "2023-10-30", "2023-11-06", "2023-11-13", "2023-11-20", "2023-11-27", "2023-12-04", "2023-12-11", "2023-12-18", "2023-12-25", "2024-01-01", "2024-01-08", "2024-01-15", "2024-01-22", "2024-01-29", "2024-02-05", "2024-02-12", "2024-02-19", "2024-02-26", "2024-03-04", "2024-03-11", "2024-03-18", "2024-03-25", "2024-04-01", "2024-04-08", "2024-04-15", "2024-04-22", "2024-04-29", "2024-05-06", "2024-05-13", "2024-05-20", "2024-05-27", "2024-06-03", "2024-06-10", "2024-06-17", "2024-06-24", "2024-07-01", "2024-07-08", "2024-07-15", "2024-07-22", "2024-07-29", "2024-08-05", "2024-08-12", "2024-08-19", "2024-08-26", "2024-09-02", "2024-09-09", "2024-09-16", "2024-09-23", "2024-09-30", "2024-10-07", "2024-10-14", "2024-10-21", "2024-10-28", "2024-11-04", "2024-11-11", "2024-11-18", "2024-11-25", "2024-12-02", "2024-12-09", "2024-12-16", "2024-12-23", "2024-12-30", "2025-01-06", "2025-01-13", "2025-01-20", "2025-02-03", "2025-02-10", "2025-02-17", "2025-02-24", "2025-03-03", "2025-03-10", "2025-03-17", "2025-03-24", "2025-03-31", "2025-04-07", "2025-04-14", "2025-04-21", "2025-04-28", "2025-05-05", "2025-05-12", "2025-05-19", "2025-05-26", "2025-06-02", "2025-06-09", "2025-06-16", "2025-06-23", "2025-06-30", "2025-07-07", "2025-07-14", "2025-07-21", "2025-07-28", "2025-08-04", "2025-08-11", "2025-08-18", "2025-08-25", "2025-09-01", "2025-09-08", "2025-09-15", "2025-09-22", "2025-09-29", "2025-10-06", "2025-10-13", "2025-10-20", "2025-10-27", "2025-11-03", "2025-11-10", "2025-11-17", "2025-11-24", "2025-12-01", "2025-12-08", "2025-12-15", "2025-12-22", "2025-12-29", "2026-01-05", "2026-01-12", "2026-01-19", "2026-01-26", "2026-02-02", "2026-02-09", "2026-02-23", "2026-03-02", "2026-03-09", "2026-03-16", "2026-03-23", "2026-03-30", "2026-04-06", "2026-04-13", "2026-04-20", "2026-05-04", "2026-05-11", "2026-05-18"], "gtgd_values": [19227.1, 20469.8, 20561.0, 21400.1, 25224.7, 25153.9, 21926.9, 18549.3, 21016.9, 23991.9, 17587.4, 16466.2, 15319.3, 19232.7, 22174.2, 26396.9, 19612.2, 20814.0, 21208.7, 19445.1, 20132.4, 16485.7, 18194.8, 19972.5, 20594.1, 24431.3, 30259.1, 28629.5, 33038.8, 30846.0, 28056.9, 21977.9, 25885.0, 29398.0, 23169.2, 29824.1, 31836.4, 21882.4, 20129.2, 20018.2, 19701.6, 25802.4, 26704.5, 27639.4, 20906.5, 23863.8, 24987.3, 24477.8, 19451.6, 22004.6, 15886.7, 14237.9, 15185.2, 12627.1, 13592.8, 13478.9, 14967.9, 15029.1, 11342.3, 10693.8, 9900.7, 10255.5, 10713.3, 10338.0, 14866.4, 14078.3, 14113.1, 13364.0, 14234.5, 13777.7, 11597.5, 10419.8, 11616.9, 10466.3, 9415.6, 8455.9, 8814.9, 9410.7, 8603.4, 9776.0, 9008.3, 16283.0, 15752.0, 12341.3, 11005.7, 6790.9, 8931.8, 7259.8, 9209.1, 10373.2, 11969.6, 7767.0, 7218.1, 9672.2, 6255.8, 7686.3, 8818.6, 7285.6, 9121.1, 12239.5, 11340.5, 7652.2, 7989.4, 8075.5, 9804.6, 10945.0, 10835.7, 13825.2, 16653.9, 15346.1, 14430.6, 14453.0, 13851.9, 16578.4, 16177.5, 19063.9, 21387.4, 20674.1, 23455.1, 18090.5, 19198.9, 23005.9, 24664.4, 21518.8, 16829.2, 13486.7, 12943.1, 14299.1, 12686.6, 12332.0, 15604.0, 16755.6, 16421.1, 11610.1, 19147.9, 13251.4, 10251.2, 12667.2, 17164.9, 18173.3, 13025.4, 12670.8, 15132.2, 14921.8, 18062.7, 21843.6, 21720.6, 25310.4, 23752.4, 27482.5, 21793.6, 23851.3, 16260.3, 24288.3, 14491.9, 13859.9, 16302.8, 17679.5, 24308.4, 19227.7, 19985.3, 21995.6, 20247.4, 17596.3, 13158.2, 17190.0, 17708.3, 14215.5, 14865.9, 14606.9, 13217.5, 15723.2, 14143.3, 13598.9, 10785.8, 13585.8, 16409.2, 17036.8, 14176.7, 14138.1, 14083.6, 11319.8, 11530.7, 14727.7, 12191.5, 10156.0, 13498.1, 11453.4, 10546.4, 12447.1, 10102.6, 9895.6, 8503.7, 9730.5, 12452.9, 12980.4, 14608.3, 17366.6, 18929.0, 20574.5, 17693.5, 15648.4, 24942.3, 23789.0, 19944.3, 20196.5, 12210.2, 15739.7, 21589.3, 20611.9, 21358.9, 20019.2, 18226.4, 18474.7, 18209.3, 20936.9, 28691.0, 31546.6, 33890.4, 46132.4, 45988.4, 49912.1, 53248.7, 38865.4, 40175.0, 33455.1, 30835.4, 25383.6, 23269.4, 29534.5, 39593.9, 35132.4, 25256.0, 23624.0, 18731.3, 18898.4, 18655.8, 20115.3, 18816.9, 17275.7, 22472.0, 17661.5, 30202.6, 38908.0, 30031.7, 26701.6, 29530.9, 19290.2, 28436.3, 38548.6, 30336.9, 22577.3, 20404.1, 20296.8, 20746.9, 20959.7, 20337.7, 21531.4, 21696.1, 23245.3], "acct_labels": ["2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04"], "acct_values": [114110, 140470, 101490, 120770, 114960, 130150, 221310, 226890, 194840, 211140, 270640, 231270, 476710, 466490, 196190, 152880, 102210, 96600, 88700, 99190, 36183, 64040, 39802, 22926, 104966, 146060, 150619, 188635, 172970, -377727, -192801, 39618, 125356, 113281, 163839, 111003, 132220, 106765, 330199, 331205, 158504, 156919, 135457, 140879, 80718, 149991, 157380, 194023, 190852, 198974, 226341, 257632, 290026, 310948, 237378, 279682, 244714, 198364, 346406, 244744], "margin_labels": ["Q2/23", "Q3/23", "Q4/23", "Q1/24", "Q2/24", "Q3/24", "Q4/24", "Q1/25", "Q2/25", "Q3/25", "Q4/25", "Q1/26"], "margin_values": [52236.0, 60317.0, 65858.0, 73689.0, 81525.0, 83194.0, 88250.0, 96329.4, 103294.8, 123241.0, 132644.2, 127853.1], "margin_util": [38.71, 43.47, 46.19, 49.62, 52.11, 52.12, 49.88, 53.67, 57.3, 65.29, 62.55, 56.09], "mix_tickers": ["SSI", "VND", "HCM", "VCI", "FTS", "BSI", "MBS", "AGR"], "mix_datasets": [{"label": "Môi giới (ước)", "data": [935.44, 385.33, 469.91, 432.63, 71.06, 80.7, 185.77, 57.27], "backgroundColor": "#008C44", "stack": "s1", "borderWidth": 0}, {"label": "Tự doanh & đầu tư (ước)", "data": [4067.31, 1331.53, 965.19, 1362.35, 372.91, 808.7, 1613.47, 227.52], "backgroundColor": "#E4A025", "stack": "s1", "borderWidth": 0}, {"label": "Cho vay margin (ước)", "data": [3526.48, 2568.89, 640.64, 1029.09, 184.13, 411.08, 798.29, 100.84], "backgroundColor": "#2f6fb0", "stack": "s1", "borderWidth": 0}, {"label": "Tư vấn & IB (ước)", "data": [39.91, 151.25, 0, 5.83, 16.08, 45.64, 3.31, 8.59], "backgroundColor": "#7a5ea8", "stack": "s1", "borderWidth": 0}, {"label": "Khác (ước)", "data": [0.7, -29.44, 24.7, -3.14, 1.5, 7.73, 80.17, -29.89], "backgroundColor": "#5f6b64", "stack": "s1", "borderWidth": 0}], "bsq_labels": ["Q2/23", "Q3/23", "Q4/23", "Q1/24", "Q2/24", "Q3/24", "Q4/24", "Q1/25", "Q2/25", "Q3/25", "Q4/25", "Q1/26"], "bsq_datasets": [{"label": "SSI", "data": [10.22, 10.59, 9.78, 9.32, 9.31, 8.84, 9.19, 9.93, 10.85, 11.82, 12.5, 11.14], "borderColor": "#008C44", "backgroundColor": "#008C44", "borderWidth": 2, "pointRadius": 3, "tension": 0.25, "fill": false}, {"label": "VND", "data": [7.27, 7.21, 6.64, 6.01, 6.46, 5.7, 5.08, 5.26, 6.36, 5.42, 4.62, 4.78], "borderColor": "#E4A025", "backgroundColor": "#E4A025", "borderWidth": 2, "pointRadius": 3, "tension": 0.25, "fill": false}, {"label": "HCM", "data": [4.98, 5.06, 5.35, 5.92, 6.41, 6.65, 6.75, 6.59, 6.69, 6.25, 6.74, 7.3], "borderColor": "#2f6fb0", "backgroundColor": "#2f6fb0", "borderWidth": 2, "pointRadius": 3, "tension": 0.25, "fill": false}, {"label": "VCI", "data": [4.62, 4.0, 4.6, 5.57, 5.32, 6.78, 7.03, 6.77, 6.84, 6.43, 6.39, 7.35], "borderColor": "#c0492f", "backgroundColor": "#c0492f", "borderWidth": 2, "pointRadius": 3, "tension": 0.25, "fill": false}, {"label": "FTS", "data": [3.23, 0, 3.01, 2.82, 0, 2.97, 2.84, 2.92, null, null, null, null], "borderColor": "#2a9d8f", "backgroundColor": "#2a9d8f", "borderWidth": 2, "pointRadius": 3, "tension": 0.25, "fill": false}, {"label": "BSI", "data": [0, 0, 0, 0, 0, 0, null, null, null, null, null, null], "borderColor": "#d4660c", "backgroundColor": "#d4660c", "borderWidth": 2, "pointRadius": 3, "tension": 0.25, "fill": false}, {"label": "MBS", "data": [4.85, 5.09, 5.21, 4.98, 4.76, 4.69, 5.16, 5.19, 5.39, 5.61, 5.11, 5.29], "borderColor": "#7a5ea8", "backgroundColor": "#7a5ea8", "borderWidth": 2, "pointRadius": 3, "tension": 0.25, "fill": false}, {"label": "AGR", "data": [0, 0, 0, 0, 0, 0, null, null, null, null, null, null], "borderColor": "#5f6b64", "backgroundColor": "#5f6b64", "borderWidth": 2, "pointRadius": 3, "tension": 0.25, "fill": false}], "share_labels": ["VCK", "TCX", "SSI", "MBS", "VND", "HCM", "VPX", "VCBS", "FTS", "BSI", "VCI", "VPBS", "KIS", "DNSE", "AAS"], "share_values": [24.35, 9.66, 7.55, 6.83, 6.05, 5.42, 4.21, 3.9, 3.69, 3.44, 3.38, 2.94, 2.92, 2.49, 0], "share_colors": ["#aaa", "#aaa", "#008C44", "#7a5ea8", "#E4A025", "#2f6fb0", "#aaa", "#aaa", "#2a9d8f", "#d4660c", "#c0492f", "#aaa", "#aaa", "#aaa", "#aaa"], "vcsh_labels": ["SSI", "VND", "VCI", "HCM", "MBS", "BSI", "FTS", "AGR"], "vcsh_values": [39668.2, 21448.2, 17319.4, 14402.0, 8372.4, 5616.6, 4529.5, 2620.8], "vcsh_colors": ["#008C44", "#E4A025", "#c0492f", "#2f6fb0", "#7a5ea8", "#d4660c", "#2a9d8f", "#5f6b64"], "util_labels": ["SSI", "VND", "VCI", "HCM", "MBS", "BSI", "FTS", "AGR"], "util_values": [46.5, 29.6, 48.0, 97.7, 92.7, 81.6, 68.9, 48.8], "util_colors": ["#008C44", "#008C44", "#008C44", "#c0492f", "#c0492f", "#d4660c", "#008C44", "#008C44"], "labels": ["2020", "2021", "2022", "2023", "2024", "2025", "2026"], "pe": [{"label": "SSI", "data": [8.406, 12.349, 14.031, 21.599, 22.611, 17.458, 14.798], "borderColor": "#008C44", "backgroundColor": "#008C44", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "VND", "data": [7.116, 5.846, 9.032, 31.714, 11.155, 15.696, 11.008], "borderColor": "#E4A025", "backgroundColor": "#E4A025", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "HCM", "data": [7.553, 12.581, 14.097, 16.797, 18.775, 22.29, 19.744], "borderColor": "#2f6fb0", "backgroundColor": "#2f6fb0", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "VCI", "data": [3.832, 11.231, 11.503, 26.634, 38.173, 27.29, 16.355], "borderColor": "#c0492f", "backgroundColor": "#c0492f", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "FTS", "data": [86.023, 5.487, 8.886, 26.977, 25.067, 27.959, 23.002], "borderColor": "#2a9d8f", "backgroundColor": "#2a9d8f", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "BSI", "data": [52.971, 7.195, 12.046, 34.297, 28.619, 35.798, 17.789], "borderColor": "#d4660c", "backgroundColor": "#d4660c", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "MBS", "data": [6.969, 10.803, 13.205, 13.816, 20.549, 20.635, 13.943], "borderColor": "#7a5ea8", "backgroundColor": "#7a5ea8", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "AGR", "data": [7.408, 20.616, 10.286, 14.437, 34.85, 29.012, 21.953], "borderColor": "#5f6b64", "backgroundColor": "#5f6b64", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}], "pb": [{"label": "SSI", "data": [0.655, 1.812, 2.791, 1.413, 2.42, 1.853, 1.699], "borderColor": "#008C44", "backgroundColor": "#008C44", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "VND", "data": [0.757, 1.482, 2.306, 1.288, 1.632, 1.159, 1.121], "borderColor": "#E4A025", "backgroundColor": "#E4A025", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "HCM", "data": [0.775, 1.985, 2.053, 1.453, 1.809, 2.139, 1.704], "borderColor": "#2f6fb0", "backgroundColor": "#2f6fb0", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "VCI", "data": [0.646, 2.155, 2.613, 2.035, 2.878, 2.186, 1.311], "borderColor": "#c0492f", "backgroundColor": "#c0492f", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "FTS", "data": [0.603, 0.966, 2.587, 1.476, 3.541, 3.624, 2.05], "borderColor": "#2a9d8f", "backgroundColor": "#2a9d8f", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "BSI", "data": [0.743, 1.161, 2.533, 0.974, 2.658, 2.488, 1.588], "borderColor": "#d4660c", "backgroundColor": "#d4660c", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "MBS", "data": [0.692, 1.712, 2.512, 1.305, 2.54, 2.386, 1.921], "borderColor": "#7a5ea8", "backgroundColor": "#7a5ea8", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}, {"label": "AGR", "data": [0.242, 1.207, 1.678, 0.796, 1.898, 1.559, 1.281], "borderColor": "#5f6b64", "backgroundColor": "#5f6b64", "borderWidth": 2, "pointRadius": 3, "pointHoverRadius": 5, "tension": 0.25, "fill": false}], "scatter": [{"label": "SSI", "data": [{"x": 14.25, "y": 1.699}], "backgroundColor": "#008C44", "borderColor": "#008C44", "pointRadius": 9, "pointHoverRadius": 12}, {"label": "VND", "data": [{"x": 10.64, "y": 1.121}], "backgroundColor": "#E4A025", "borderColor": "#E4A025", "pointRadius": 9, "pointHoverRadius": 12}, {"label": "HCM", "data": [{"x": 10.34, "y": 1.704}], "backgroundColor": "#2f6fb0", "borderColor": "#2f6fb0", "pointRadius": 9, "pointHoverRadius": 12}, {"label": "VCI", "data": [{"x": 9.5, "y": 1.311}], "backgroundColor": "#c0492f", "borderColor": "#c0492f", "pointRadius": 9, "pointHoverRadius": 12}, {"label": "FTS", "data": [{"x": 9.28, "y": 2.05}], "backgroundColor": "#2a9d8f", "borderColor": "#2a9d8f", "pointRadius": 9, "pointHoverRadius": 12}, {"label": "BSI", "data": [{"x": 9.31, "y": 1.588}], "backgroundColor": "#d4660c", "borderColor": "#d4660c", "pointRadius": 9, "pointHoverRadius": 12}, {"label": "MBS", "data": [{"x": 15.22, "y": 1.921}], "backgroundColor": "#7a5ea8", "borderColor": "#7a5ea8", "pointRadius": 9, "pointHoverRadius": 12}, {"label": "AGR", "data": [{"x": 6.04, "y": 1.281}], "backgroundColor": "#5f6b64", "borderColor": "#5f6b64", "pointRadius": 9, "pointHoverRadius": 12}]};
+    const COMMON = {responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      plugins:{legend:{position:'top', labels:{font:{size:11,weight:'600'},boxWidth:14,padding:10}}},
+      scales:{x:{ticks:{font:{size:10}},grid:{display:false}},
+              y:{ticks:{font:{size:11}},grid:{color:'#f0ede5'}}}};
+
+    /* ── Trụ 1 ─────────────────────────────────────────────────── */
+    new Chart(document.getElementById('gtgd-chart'), {
+      type:'line',
+      data:{labels:D.gtgd_labels, datasets:[{
+        label:'GTGD bình quân (Tỷ VNĐ/ngày)', data:D.gtgd_values,
+        borderColor:'#008C44', backgroundColor:'rgba(0,140,68,.10)',
+        borderWidth:1.6, pointRadius:0, tension:0.2, fill:true
+      }]},
+      options: Object.assign({}, COMMON, {plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>'GTGD: '+ctx.raw.toLocaleString()+' Tỷ/ngày'}}},
+        scales:{x:{ticks:{font:{size:9}, maxTicksLimit:14},grid:{display:false}},
+                y:{ticks:{font:{size:11},callback:v=>v.toLocaleString()},grid:{color:'#f0ede5'}}}})
+    });
+
+    new Chart(document.getElementById('acct-chart'), {
+      type:'bar',
+      data:{labels:D.acct_labels, datasets:[{
+        label:'Số tài khoản mở mới/tháng', data:D.acct_values,
+        backgroundColor:'#E4A025', borderWidth:0
+      }]},
+      options: Object.assign({}, COMMON, {plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>ctx.raw.toLocaleString()+' tài khoản'}}},
+        scales:{x:{ticks:{font:{size:9},maxTicksLimit:18},grid:{display:false}},
+                y:{ticks:{font:{size:11},callback:v=>(v/1000).toFixed(0)+'k'},grid:{color:'#f0ede5'}}}})
+    });
+
+    new Chart(document.getElementById('margin-sector-chart'), {
+      type:'bar',
+      data:{labels:D.margin_labels, datasets:[
+        {type:'bar', label:'Dư nợ margin (Tỷ VNĐ)', data:D.margin_values,
+         backgroundColor:'#2f6fb0', borderWidth:0, yAxisID:'y'},
+        {type:'line', label:'Utilization (/2×VCSH) %', data:D.margin_util,
+         borderColor:'#c0492f', backgroundColor:'#c0492f',
+         borderWidth:2, pointRadius:4, tension:0.2, yAxisID:'y1', fill:false}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'top',labels:{font:{size:11,weight:'600'},boxWidth:14}}},
+        scales:{x:{ticks:{font:{size:11}},grid:{display:false}},
+          y:{position:'left',ticks:{font:{size:11},callback:v=>(v/1000).toFixed(0)+'k'},
+             grid:{color:'#f0ede5'}, title:{display:true,text:'Dư nợ (Tỷ VNĐ)',font:{size:11}}},
+          y1:{position:'right',ticks:{font:{size:11},callback:v=>v+'%'},
+              grid:{display:false}, title:{display:true,text:'Utilization %',font:{size:11}},
+              suggestedMin:0,suggestedMax:100}}}
+    });
+
+    /* ── Trụ 2 ─────────────────────────────────────────────────── */
+    new Chart(document.getElementById('mix-chart'), {
+      type:'bar',
+      data:{labels:D.mix_tickers, datasets:D.mix_datasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{font:{size:11,weight:'600'},boxWidth:14}},
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.raw.toLocaleString()+' Tỷ'}}},
+        scales:{x:{stacked:true,ticks:{font:{size:12,weight:'600'}},grid:{display:false}},
+                y:{stacked:true,ticks:{font:{size:11},callback:v=>v.toLocaleString()},
+                   grid:{color:'#f0ede5'},title:{display:true,text:'LN gộp (Tỷ VNĐ)',font:{size:11}}}}}
+    });
+
+    new Chart(document.getElementById('bsq-chart'), {
+      type:'line',
+      data:{labels:D.bsq_labels, datasets:D.bsq_datasets},
+      options: Object.assign({}, COMMON, {
+        plugins:{legend:{position:'top',labels:{font:{size:11,weight:'600'},boxWidth:14}},
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+(ctx.raw==null?'—':ctx.raw.toFixed(2)+'%')}}},
+        scales:{x:{ticks:{font:{size:11}},grid:{display:false}},
+                y:{ticks:{font:{size:11},callback:v=>v+'%'},grid:{color:'#f0ede5'},
+                   title:{display:true,text:'Thị phần MG HOSE (%)',font:{size:11}}}}})
+    });
+
+    new Chart(document.getElementById('share-now-chart'), {
+      type:'bar',
+      data:{labels:D.share_labels, datasets:[{
+        label:'Thị phần MG HOSE hiện tại (%)', data:D.share_values,
+        backgroundColor:D.share_colors, borderWidth:0
+      }]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>ctx.raw.toFixed(2)+'%'}}},
+        scales:{x:{ticks:{font:{size:11},callback:v=>v+'%'},grid:{color:'#f0ede5'}},
+                y:{ticks:{font:{size:11,weight:'600'}},grid:{display:false}}}}
+    });
+
+    /* ── Trụ 4 ─────────────────────────────────────────────────── */
+    new Chart(document.getElementById('vcsh-chart'), {
+      type:'bar',
+      data:{labels:D.vcsh_labels, datasets:[{
+        label:'VCSH (Tỷ VNĐ)', data:D.vcsh_values,
+        backgroundColor:D.vcsh_colors, borderWidth:0
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>ctx.raw.toLocaleString()+' Tỷ VNĐ'}}},
+        scales:{x:{ticks:{font:{size:12,weight:'600'}},grid:{display:false}},
+                y:{ticks:{font:{size:11},callback:v=>(v/1000).toFixed(0)+'k'},
+                   grid:{color:'#f0ede5'}}}}
+    });
+
+    new Chart(document.getElementById('util-chart'), {
+      type:'bar',
+      data:{labels:D.util_labels, datasets:[{
+        label:'Margin / 2×VCSH (%)', data:D.util_values,
+        backgroundColor:D.util_colors, borderWidth:0
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>ctx.raw+'%'}},
+          annotation:{annotations:{
+            warn:{type:'line',yMin:85,yMax:85,borderColor:'#c0492f',borderWidth:1.5,
+                  borderDash:[5,4],label:{display:true,content:'85% — cảnh báo',
+                  position:'end',backgroundColor:'rgba(192,73,47,.9)',color:'#fff',font:{size:10}}}}}},
+        scales:{x:{ticks:{font:{size:12,weight:'600'}},grid:{display:false}},
+                y:{ticks:{font:{size:11},callback:v=>v+'%'},grid:{color:'#f0ede5'},
+                   suggestedMin:0,suggestedMax:100}}}
+    });
+
+    /* ── Định giá so chéo (v1) ──────────────────────────────────── */
+    const LINE_VAL = Object.assign({}, COMMON, {
+      plugins:{legend:{position:'top',labels:{font:{size:11,weight:'600'},boxWidth:14,padding:10}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+(ctx.raw==null?'—':ctx.raw.toFixed(2))}}},
+    });
+    new Chart(document.getElementById('pe-chart'),
+      {type:'line',data:{labels:D.labels,datasets:D.pe},options:LINE_VAL});
+    new Chart(document.getElementById('pb-chart'),
+      {type:'line',data:{labels:D.labels,datasets:D.pb},options:LINE_VAL});
+    new Chart(document.getElementById('scatter-chart'), {
+      type:'scatter', data:{datasets:D.scatter},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{font:{size:11,weight:'600'},boxWidth:14,padding:10}},
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': ROE '+ctx.raw.x.toFixed(1)+'%, P/B '+ctx.raw.y.toFixed(2)}}},
+        scales:{x:{title:{display:true,text:'ROE TTM (%)',font:{size:12,weight:'600'}},
+                   ticks:{font:{size:11},callback:v=>v+'%'},grid:{color:'#f0ede5'}},
+                y:{title:{display:true,text:'P/B TTM (lần)',font:{size:12,weight:'600'}},
+                   ticks:{font:{size:11}},grid:{color:'#f0ede5'}}}}
+    });
+    
+</script>
+</body>
+</html>
